@@ -1,0 +1,42 @@
+const express = require('express');
+const router = express.Router();
+
+const authRoutes = require('./authRoutes');
+const userRoutes = require('./userRoutes');
+const doctorRoutes = require('./doctorRoutes');
+const serviceRoutes = require('./serviceRoutes');
+const appointmentRoutes = require('./appointmentRoutes');
+const recordRoutes = require('./recordRoutes');
+const prescriptionRoutes = require('./prescriptionRoutes');
+const documentRoutes = require('./documentRoutes');
+const invoiceRoutes = require('./invoiceRoutes');
+const reviewRoutes = require('./reviewRoutes');
+const blogRoutes = require('./blogRoutes');
+const consultationRoutes = require('./consultationRoutes');
+const notificationRoutes = require('./notificationRoutes');
+const adminRoutes = require('./adminRoutes');
+const messageRoutes = require('./messageRoutes');
+const insuranceRoutes = require('./insuranceRoutes');
+const settingsRoutes = require('./settingsRoutes');
+const publicRoutes = require('./publicRoutes');
+
+router.use('/auth', authRoutes);
+router.use('/users', userRoutes);
+router.use('/doctors', doctorRoutes);
+router.use('/services', serviceRoutes);
+router.use('/appointments', appointmentRoutes);
+router.use('/records', recordRoutes);
+router.use('/prescriptions', prescriptionRoutes);
+router.use('/documents', documentRoutes);
+router.use('/invoices', invoiceRoutes);
+router.use('/reviews', reviewRoutes);
+router.use('/blog', blogRoutes);
+router.use('/consultations', consultationRoutes);
+router.use('/notifications', notificationRoutes);
+router.use('/messages', messageRoutes);
+router.use('/admin', adminRoutes);
+router.use('/insurance', insuranceRoutes);
+router.use('/settings', settingsRoutes);
+router.use('/public', publicRoutes);
+
+module.exports = router;
