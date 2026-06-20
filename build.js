@@ -21,15 +21,8 @@ run('npm install', path.join(ROOT, 'server'));
 console.log('\n=== Installing client dependencies ===');
 run('npm install --include=dev', path.join(ROOT, 'client'));
 
-console.log('\n=== Building patient portal ===');
-run('npx --yes vite build', path.join(ROOT, 'client'));
-
-console.log('\n=== Installing staff-portal dependencies ===');
-run('npm install --include=dev', path.join(ROOT, 'staff-portal'));
-
-console.log('\n=== Building staff portal ===');
-run('npx --yes vite build', path.join(ROOT, 'staff-portal'));
+console.log('\n=== Building client ===');
+run('npx vite build', path.join(ROOT, 'client'));
 
 console.log('\n=== Build complete! ===');
-console.log('  Patient portal: client/dist/');
-console.log('  Staff portal:   staff-portal/dist/');
+console.log('  Client: client/dist/');

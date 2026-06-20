@@ -1,13 +1,8 @@
 const { Appointment, Consultation } = require('../models');
-const { generateVideoToken, createVideoRoom, isTwilioConfigured } = require('../config/twilio');
 const { AppError, ErrorCodes } = require('../utils/AppError');
 
 async function startConsultation(req, res, next) {
   try {
-    if (!isTwilioConfigured()) {
-      throw new AppError('Video consultations are not yet configured. Please contact the administrator to set up Twilio credentials.', 503, ErrorCodes.SERVICE_UNAVAILABLE);
-    }
-
     const { appointmentId } = req.params;
     const appointment = await Appointment.findById(appointmentId)
       .populate({ path: 'doctorId', populate: { path: 'userId', select: 'firstName lastName' } })
@@ -17,19 +12,19 @@ async function startConsultation(req, res, next) {
 
     const roomName = `verdantcare-${appointmentId}`;
 
-    // Find existing consultation (created at booking) or create one
+    // Find existing consultation or create one
     let consultation = await Consultation.findOne({ appointmentId });
     if (!consultation) {
       consultation = await Consultation.create({
-        appointmentId, doctorId: appointment.doctorId._id, patientId: appointment.patientId._id,
-        roomUrl: roomName, status: 'WAITING',
+        appointmentId,
+        doctorId: appointment.doctorId._id,
+        patientId: appointment.patientId._id,
+        roomUrl: roomName,
+        status: 'WAITING',
       });
     }
 
-    // Create/join the Twilio room
-    await createVideoRoom(roomName);
     const doctorName = `${appointment.doctorId.userId.firstName} ${appointment.doctorId.userId.lastName}`;
-    const token = await generateVideoToken(doctorName, roomName);
 
     // Update consultation status
     consultation.status = 'IN_PROGRESS';
@@ -45,7 +40,16 @@ async function startConsultation(req, res, next) {
       roomName,
     });
 
-    res.json({ success: true, message: 'Consultation started.', data: { consultation, token, roomName } });
+    res.json({
+      success: true,
+      message: 'Consultation started.',
+      data: {
+        consultation,
+        roomName,
+        doctorId: appointment.doctorId._id.toString(),
+        patientId: appointment.patientId._id.toString(),
+      },
+    });
   } catch (error) { next(error); }
 }
 
@@ -57,14 +61,14 @@ async function getConsultation(req, res, next) {
       .populate({ path: 'patientId', select: 'firstName lastName email' });
     if (!consultation) throw new AppError('Consultation not found.', 404, ErrorCodes.NOT_FOUND);
 
-    if (req.user.role === 'PATIENT') {
-      const patientToken = await generateVideoToken(
-        `${consultation.patientId.firstName} ${consultation.patientId.lastName}`, consultation.roomUrl
-      );
-      res.json({ success: true, data: { consultation, token: patientToken } });
-    } else {
-      res.json({ success: true, data: consultation });
-    }
+    res.json({
+      success: true,
+      data: {
+        consultation,
+        currentUserId: req.user.id,
+        currentUserRole: req.user.role,
+      },
+    });
   } catch (error) { next(error); }
 }
 
@@ -75,6 +79,11 @@ async function completeConsultation(req, res, next) {
       status: 'COMPLETED', endedAt: new Date(), notes,
       followUpDate: followUpDate ? new Date(followUpDate) : null,
     }, { new: true });
+
+    // Notify via socket that consultation ended
+    const { emitToRoom } = require('../config/socket');
+    emitToRoom(`consultation:${consultation._id}`, 'consultation:ended', { consultationId: consultation._id });
+
     res.json({ success: true, message: 'Consultation completed.', data: consultation });
   } catch (error) { next(error); }
 }

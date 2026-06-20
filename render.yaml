@@ -1,7 +1,7 @@
 services:
-  # ─── Backend API ────────────────────────────────────────────────────────────
+  # ─── Full-Stack App (API + Client) ─────────────────────────────────────────
   - type: web
-    name: verdantcare-api
+    name: verdantcare
     runtime: node
     region: oregon
     plan: free
@@ -33,43 +33,13 @@ services:
         sync: false
       - key: EMAIL_FROM
         sync: false
-      - key: PATIENT_PORTAL_URL
-        sync: false
-      - key: STAFF_PORTAL_URL
-        sync: false
-
-  # ─── Patient Portal (static site) ──────────────────────────────────────────
-  - type: web
-    name: verdantcare-patient
-    runtime: static
-    region: oregon
-    plan: free
-    buildCommand: npm install --prefix client --include=dev && npx --yes vite build -- --outDir dist --config client/vite.config.js client
-    staticPublishDir: client/dist
-    envVars:
+      - key: CLIENT_URL
+        value: https://verdantcare.onrender.com
       - key: VITE_API_URL
-        sync: false
-      - key: VITE_STAFF_PORTAL_URL
-        sync: false
+        value: https://verdantcare.onrender.com/api
       - key: VITE_GOOGLE_CLIENT_ID
         sync: false
       - key: VITE_RAZORPAY_KEY_ID
         sync: false
       - key: VITE_STRIPE_PUBLISHABLE_KEY
-        sync: false
-
-  # ─── Staff Portal (static site) ────────────────────────────────────────────
-  - type: web
-    name: verdantcare-staff
-    runtime: static
-    region: oregon
-    plan: free
-    buildCommand: npm install --prefix staff-portal --include=dev && npx --yes vite build -- --outDir dist --config staff-portal/vite.config.js staff-portal
-    staticPublishDir: staff-portal/dist
-    envVars:
-      - key: VITE_API_URL
-        sync: false
-      - key: VITE_PATIENT_PORTAL_URL
-        sync: false
-      - key: VITE_GOOGLE_CLIENT_ID
         sync: false

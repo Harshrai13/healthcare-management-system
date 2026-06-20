@@ -25,7 +25,6 @@
     "react-window": "^1.8.10",
     "recharts": "^2.15.0",
     "socket.io-client": "^4.8.3",
-    "twilio-video": "^2.35.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {
