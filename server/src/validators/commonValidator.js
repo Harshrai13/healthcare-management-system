@@ -31,6 +31,7 @@ const reviewSchema = z.object({
   appointmentId: z.string().regex(objectIdRegex, 'Please select a valid appointment').optional(),
   rating: z.number().int().min(1, 'Rating must be between 1 and 5').max(5),
   comment: z.string().min(10, 'Comment must be at least 10 characters').max(1000),
+  patientName: z.string().min(2, 'Name must be at least 2 characters').max(100).optional(),
 });
 
 const contactSchema = z.object({

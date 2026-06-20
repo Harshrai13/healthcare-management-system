@@ -35,9 +35,8 @@ async function seedDatabase() {
   ]);
 
   const passwordHash = await bcrypt.hash('Admin@123', 12);
-  const patientHash = await bcrypt.hash('Patient@123', 12);
-  const doctorHash = await bcrypt.hash('Doctor@123', 12);
 
+  // Only create admin/staff users - no dummy patients/doctors
   const admin = await User.create({
     email: 'admin@verdantcare.com',
     passwordHash,
@@ -78,140 +77,8 @@ async function seedDatabase() {
   const serviceDocs = await Service.insertMany(services);
   console.log(`  ${serviceDocs.length} services created`);
 
-  const familyMedicine = serviceDocs.find((s) => s.slug === 'family-medicine');
-  const pediatrics = serviceDocs.find((s) => s.slug === 'pediatrics');
-  const telemedicine = serviceDocs.find((s) => s.slug === 'telemedicine');
-
-  const doctors = [
-    { email: 'sarah.chen@verdantcare.com', firstName: 'Sarah', lastName: 'Chen', specialty: 'Family Medicine', experienceYears: 12, rating: 4.9 },
-    { email: 'james.wilson@verdantcare.com', firstName: 'James', lastName: 'Wilson', specialty: 'Pediatrics', experienceYears: 8, rating: 4.7 },
-    { email: 'emily.rodriguez@verdantcare.com', firstName: 'Emily', lastName: 'Rodriguez', specialty: 'Telemedicine', experienceYears: 10, rating: 4.8 },
-  ];
-
-  const doctorProfiles = [];
-  for (const doc of doctors) {
-    const user = await User.create({
-      email: doc.email,
-      passwordHash: doctorHash,
-      firstName: doc.firstName,
-      lastName: doc.lastName,
-      phone: '+1 (555) 100-0001',
-      role: 'DOCTOR',
-      isVerified: true,
-    });
-    const profile = await DoctorProfile.create({
-      userId: user._id,
-      specialty: doc.specialty,
-      bio: `Dr. ${doc.lastName} is a board-certified physician with ${doc.experienceYears} years of experience at VerdantCare.`,
-      education: 'MD, Board Certified',
-      experienceYears: doc.experienceYears,
-      consultationModes: ['IN_PERSON', 'VIDEO'],
-      rating: doc.rating,
-      reviewCount: 24,
-      isAvailable: true,
-      schedules: defaultSchedule,
-    });
-    doctorProfiles.push(profile);
-    console.log(`  Doctor created: Dr. ${doc.firstName} ${doc.lastName}`);
-  }
-
-  const patients = [
-    { email: 'john.doe@example.com', firstName: 'John', lastName: 'Doe' },
-    { email: 'jane.smith@example.com', firstName: 'Jane', lastName: 'Smith' },
-    { email: 'mike.johnson@example.com', firstName: 'Mike', lastName: 'Johnson' },
-  ];
-
-  const patientUsers = [];
-  for (const p of patients) {
-    const user = await User.create({
-      email: p.email,
-      passwordHash: patientHash,
-      firstName: p.firstName,
-      lastName: p.lastName,
-      phone: '+1 (555) 200-0001',
-      role: 'PATIENT',
-      isVerified: true,
-    });
-    patientUsers.push(user);
-    console.log(`  Patient created: ${p.firstName} ${p.lastName}`);
-  }
-
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(0, 0, 0, 0);
-
-  const nextWeek = new Date();
-  nextWeek.setDate(nextWeek.getDate() + 7);
-  nextWeek.setHours(0, 0, 0, 0);
-
-  await Appointment.insertMany([
-    {
-      patientId: patientUsers[0]._id,
-      doctorId: doctorProfiles[0]._id,
-      serviceId: familyMedicine._id,
-      date: tomorrow,
-      startTime: '10:00',
-      endTime: '10:30',
-      consultationType: 'IN_PERSON',
-      status: 'CONFIRMED',
-    },
-    {
-      patientId: patientUsers[1]._id,
-      doctorId: doctorProfiles[1]._id,
-      serviceId: pediatrics._id,
-      date: tomorrow,
-      startTime: '14:00',
-      endTime: '14:30',
-      consultationType: 'IN_PERSON',
-      status: 'PENDING',
-    },
-    {
-      patientId: patientUsers[0]._id,
-      doctorId: doctorProfiles[2]._id,
-      serviceId: telemedicine._id,
-      date: nextWeek,
-      startTime: '11:00',
-      endTime: '11:30',
-      consultationType: 'VIDEO',
-      status: 'CONFIRMED',
-    },
-  ]);
-  console.log('  3 sample appointments created');
-
-  // Seed sample reviews (approved, linked to seeded doctors)
-  const reviews = [
-    { patientId: patientUsers[0]._id, doctorId: doctorProfiles[0]._id, rating: 5, comment: 'Dr. Chen is absolutely wonderful. She took the time to listen to all my concerns and explained everything clearly. Highly recommend!', isApproved: true, isFeatured: true },
-    { patientId: patientUsers[1]._id, doctorId: doctorProfiles[0]._id, rating: 5, comment: 'Best family doctor I have ever had. The entire staff at VerdantCare is professional and caring.', isApproved: true, isFeatured: true },
-    { patientId: patientUsers[2]._id, doctorId: doctorProfiles[1]._id, rating: 5, comment: 'Dr. Wilson is amazing with kids. My son actually looks forward to his checkups now!', isApproved: true, isFeatured: true },
-    { patientId: patientUsers[0]._id, doctorId: doctorProfiles[1]._id, rating: 4, comment: 'Great pediatrician. Very thorough and gentle. Only minor wait time issue.', isApproved: true },
-    { patientId: patientUsers[1]._id, doctorId: doctorProfiles[2]._id, rating: 5, comment: 'The video consultation was seamless. Dr. Rodriguez was just as attentive as an in-person visit. Very convenient!', isApproved: true, isFeatured: true },
-    { patientId: patientUsers[2]._id, doctorId: doctorProfiles[2]._id, rating: 4, comment: 'Good telehealth experience. Doctor was knowledgeable and the platform worked well.', isApproved: true },
-    { patientId: patientUsers[0]._id, doctorId: doctorProfiles[0]._id, rating: 5, comment: 'I have been seeing Dr. Chen for 3 years now. She is thorough, compassionate, and always available when needed.', isApproved: true },
-    { patientId: patientUsers[1]._id, doctorId: doctorProfiles[1]._id, rating: 4, comment: 'Dr. Wilson diagnosed my daughter\'s condition when other doctors missed it. Very grateful!', isApproved: true },
-  ];
-
-  await Review.insertMany(reviews);
-  console.log(`  ${reviews.length} sample reviews created`);
-
-  // Update doctor ratings based on seeded reviews
-  for (const profile of doctorProfiles) {
-    const avgResult = await Review.aggregate([
-      { $match: { doctorId: profile._id, isApproved: true } },
-      { $group: { _id: null, avgRating: { $avg: '$rating' }, count: { $sum: 1 } } },
-    ]);
-    if (avgResult[0]) {
-      await DoctorProfile.findByIdAndUpdate(profile._id, {
-        rating: avgResult[0].avgRating,
-        reviewCount: avgResult[0].count,
-      });
-    }
-  }
-  console.log('  Doctor ratings updated from reviews');
-
-  console.log('\n  ── Demo Credentials ──');
-  console.log('  Admin:    admin@verdantcare.com / Admin@123');
-  console.log('  Doctor:   sarah.chen@verdantcare.com / Doctor@123');
-  console.log('  Patient:  john.doe@example.com / Patient@123');
+  console.log('\n  ── Admin Credentials ──');
+  console.log('  Admin: admin@verdantcare.com / Admin@123');
 }
 
 module.exports = { seedDatabase };

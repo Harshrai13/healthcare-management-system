@@ -28,12 +28,16 @@ async function getFeaturedReviews(req, res, next) {
 
 async function createReview(req, res, next) {
   try {
-    const { doctorId, appointmentId, rating, comment } = req.body;
-    if (appointmentId) {
-      const existingReview = await Review.findOne({ patientId: req.user.id, appointmentId });
-      if (existingReview) throw new AppError('You have already reviewed this appointment.', 409, ErrorCodes.CONFLICT);
-    }
-    const review = await Review.create({ patientId: req.user.id, doctorId: doctorId || null, appointmentId: appointmentId || null, rating, comment, isApproved: false });
+    const { doctorId, rating, comment, patientName } = req.body;
+    // Public reviews: no auth required, optional patientName
+    const review = await Review.create({
+      patientId: req.user?.id || null,
+      patientName: patientName || (req.user ? `${req.user.firstName} ${req.user.lastName}` : 'Anonymous'),
+      doctorId: doctorId || null,
+      rating,
+      comment,
+      isApproved: false,
+    });
     res.status(201).json({ success: true, message: 'Review submitted for moderation.', data: review });
   } catch (error) { next(error); }
 }

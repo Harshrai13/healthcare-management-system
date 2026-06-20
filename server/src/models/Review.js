@@ -2,7 +2,8 @@ const mongoose = require('mongoose');
 
 const reviewSchema = new mongoose.Schema(
   {
-    patientId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    patientId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false },
+    patientName: { type: String, default: 'Anonymous' },
     doctorId: { type: mongoose.Schema.Types.ObjectId, ref: 'DoctorProfile', required: false },
     appointmentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Appointment', required: false },
     rating: { type: Number, required: true, min: 1, max: 5 },
