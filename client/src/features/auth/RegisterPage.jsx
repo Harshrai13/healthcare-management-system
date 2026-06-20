@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import { Mail, Lock, UserPlus, AlertCircle, Eye, EyeOff, User, Phone, CheckCircle2, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../../api/axios';
+import { setCredentials } from '../../store/authSlice';
 
 function RegisterPage() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [formData, setFormData] = useState({ 
     firstName: '', 
     lastName: '', 
@@ -60,15 +63,11 @@ function RegisterPage() {
       }
       const response = await api.post('/auth/register', payload);
       
-      // DEV ONLY: Show OTP from response for testing
-      if (response.data?.devOtp) {
-        toast.success(`Verification code: ${response.data.devOtp}`, { duration: 10000 });
-      } else if (response.data?.emailSent === false) {
-        toast('Account created but email could not be sent. Please contact support or check Render SMTP settings.', { icon: '⚠️', duration: 8000 });
-      } else {
-        toast.success('Account created! Please check your email for the verification code.');
-      }
-      navigate('/verify-email', { state: { email: formData.email } });
+      // Auto-login: store token and redirect to dashboard
+      const { user, accessToken } = response.data.data;
+      dispatch(setCredentials({ user, accessToken }));
+      toast.success('Account created successfully!');
+      navigate('/dashboard');
     } catch (error) {
       const data = error.response?.data;
       // Map backend field-level validation errors to the form

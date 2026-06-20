@@ -19,35 +19,36 @@ async function register(req, res, next) {
     const existingUser = await User.findOne({ email });
     if (existingUser) throw new AppError('An account with this email already exists.', 409, ErrorCodes.CONFLICT);
     const passwordHash = await bcrypt.hash(password, 12);
-    const user = await User.create({ email, passwordHash, firstName, lastName, phone, role: 'PATIENT' });
-
-    // Generate 6-digit verification OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-    // Store OTP in Redis (primary) and DB (fallback)
-    const redisKey = `verify_email:${email}`;
-    await redisSafeSet(redisKey, otp, 'EX', 900); // 15 minutes
-    await User.findByIdAndUpdate(user._id, {
-      verificationOtp: otp,
-      verificationOtpExpiry: new Date(Date.now() + 15 * 60 * 1000),
+    const user = await User.create({
+      email, passwordHash, firstName, lastName, phone, role: 'PATIENT',
+      isVerified: true, // Auto-verify on registration
     });
 
-    // Log OTP to console for immediate visibility
-    console.log('\n\n ═══════════════════════════════════════════');
-    console.log(`   VERIFICATION CODE for ${email}: ${otp}`);
-    console.log('═══════════════════════════════════════════\n\n');
+    // Auto-login: generate tokens immediately
+    const tokens = generateAuthTokens(user);
+    res.cookie('refreshToken', tokens.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
 
-    // Send verification email and track result
-    const emailResult = await sendEmailNotification(user.email, 'emailVerification', { firstName: user.firstName, otp });
-
-    logger.info('User registered', { userId: user._id, email: user.email, emailSent: emailResult?.emailSent });
+    logger.info('User registered and auto-logged in', { userId: user._id, email: user.email });
     res.status(201).json({
       success: true,
-      message: 'Account created. Please check your email to verify your account.',
-      data: { userId: user._id, email: user.email },
-      emailSent: emailResult?.emailSent ?? false,
-      // DEV ONLY: OTP shown in response for testing (remove in production)
-      ...(process.env.NODE_ENV === 'development' && { devOtp: otp }),
+      message: 'Account created successfully.',
+      data: {
+        user: {
+          id: user._id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+          avatar: user.avatar,
+          isVerified: user.isVerified,
+        },
+        accessToken: tokens.accessToken,
+      },
     });
   } catch (error) { next(error); }
 }
