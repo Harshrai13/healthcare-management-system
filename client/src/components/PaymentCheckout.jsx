@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, CreditCard, Smartphone, CheckCircle } from 'lucide-react';
+import { X, CreditCard, Smartphone, CheckCircle, AlertTriangle } from 'lucide-react';
 import { invoicesAPI } from '../api/generalAPI';
 import RazorpayCheckout from './RazorpayCheckout';
 import StripeCheckout from './StripeCheckout';
@@ -7,9 +7,28 @@ import StripeCheckout from './StripeCheckout';
 export default function PaymentCheckout({ invoice, onClose, onSuccess }) {
   const [method, setMethod] = useState(null);
   const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '';
+  const hasRazorpay = !!import.meta.env.VITE_RAZORPAY_KEY_ID;
+  const hasAnyProvider = hasRazorpay || stripeKey;
 
   const formatCurrency = (amount) =>
     new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount || 0);
+
+  if (!hasAnyProvider) {
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-2xl p-6 max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle size={28} className="text-amber-600" />
+          </div>
+          <h3 className="text-lg font-bold text-neutral-900 mb-2">Payment Not Available</h3>
+          <p className="text-sm text-neutral-500 mb-6">
+            Online payment processing has not been configured yet. Please contact the clinic to arrange payment.
+          </p>
+          <button onClick={onClose} className="btn-primary w-full">Close</button>
+        </div>
+      </div>
+    );
+  }
 
   if (method === 'razorpay') {
     return (

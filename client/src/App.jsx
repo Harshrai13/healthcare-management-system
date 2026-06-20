@@ -1,11 +1,14 @@
 import { Routes, Route } from 'react-router-dom';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
 import PublicLayout from './layouts/PublicLayout';
 import DashboardLayout from './layouts/DashboardLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoadingSpinner from './components/LoadingSpinner';
+import { useAuth } from './hooks/useAuth';
+
+const STAFF_ROLES = ['DOCTOR', 'SUPER_ADMIN', 'CONTENT_MANAGER', 'BILLING_STAFF', 'RECEPTIONIST'];
 
 // Public pages
 const HomePage = lazy(() => import('./features/public/HomePage'));
@@ -67,7 +70,33 @@ const AdminLoginAsPage = lazy(() => import('./features/admin/AdminLoginAsPage'))
 const AdminReportsPage = lazy(() => import('./features/admin/AdminReportsPage'));
 
 function App() {
+  const { user, isAuthenticated } = useAuth();
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+  const staffPortalUrl = import.meta.env.VITE_STAFF_PORTAL_URL || '';
+
+  // Redirect doctors/admins to staff portal
+  useEffect(() => {
+    if (isAuthenticated && STAFF_ROLES.includes(user?.role) && staffPortalUrl) {
+      window.location.href = staffPortalUrl;
+    }
+  }, [isAuthenticated, user, staffPortalUrl]);
+
+  // Show loading while redirecting staff users
+  if (isAuthenticated && STAFF_ROLES.includes(user?.role)) {
+    if (!staffPortalUrl) {
+      // Staff portal URL not configured — show dashboard normally (fallback)
+    } else {
+      return (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <LoadingSpinner />
+            <p className="mt-4 text-neutral-500 text-sm">Redirecting to Staff Portal...</p>
+          </div>
+        </div>
+      );
+    }
+  }
+
   const appContent = (
     <Suspense fallback={<LoadingSpinner />}>
       <Routes>

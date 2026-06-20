@@ -6,6 +6,19 @@ if (process.env.RENDER_EXTERNAL_URL) {
   if (!process.env.FRONTEND_URL) process.env.FRONTEND_URL = process.env.RENDER_EXTERNAL_URL;
 }
 
+// Build CLIENT_URL from separate portal URLs if provided
+{
+  const portalUrls = [
+    process.env.PATIENT_PORTAL_URL,
+    process.env.STAFF_PORTAL_URL,
+  ].filter(Boolean);
+  if (portalUrls.length > 0) {
+    const existing = (process.env.CLIENT_URL || '').split(',').map(s => s.trim()).filter(Boolean);
+    const combined = [...new Set([...existing, ...portalUrls])];
+    process.env.CLIENT_URL = combined.join(',');
+  }
+}
+
 const http = require('http');
 const app = require('./app');
 const { connectDatabase, disconnectDatabase } = require('./config/database');
@@ -35,20 +48,18 @@ async function startServer() {
       logger.warn('Cloudinary config skipped:', cloudErr.message);
     }
 
-    // 4. Auto-seed in development if database is empty
-    if (process.env.NODE_ENV !== 'production') {
-      try {
-        const { User } = require('./models');
-        const count = await User.countDocuments();
-        if (count === 0) {
-          logger.info('Empty database detected — running seed...');
-          const { seedDatabase } = require('./seeds/seedData');
-          await seedDatabase();
-          logger.info('Database seeded successfully');
-        }
-      } catch (seedErr) {
-        logger.warn('Auto-seed skipped:', seedErr.message);
+    // 4. Auto-seed if database is empty (dev + production)
+    try {
+      const { User } = require('./models');
+      const count = await User.countDocuments();
+      if (count === 0) {
+        logger.info('Empty database detected — running seed...');
+        const { seedDatabase } = require('./seeds/seedData');
+        await seedDatabase();
+        logger.info('Database seeded successfully');
       }
+    } catch (seedErr) {
+      logger.warn('Auto-seed skipped:', seedErr.message);
     }
 
     const server = http.createServer(app);

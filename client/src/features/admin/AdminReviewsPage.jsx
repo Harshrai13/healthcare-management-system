@@ -76,7 +76,7 @@ export default function AdminReviewsPage() {
     try {
       await reviewsAPI.approve(id);
       toast.success('Review approved and published!');
-      setReviews(prev => prev.map(r => r.id === id ? { ...r, isApproved: true } : r));
+      setReviews(prev => prev.map(r => r._id === id ? { ...r, isApproved: true } : r));
     } catch {
       toast.error('Failed to approve review');
     } finally {
@@ -91,7 +91,7 @@ export default function AdminReviewsPage() {
     try {
       await reviewsAPI.delete(id);
       toast.success('Review deleted');
-      setReviews(prev => prev.filter(r => r.id !== id));
+      setReviews(prev => prev.filter(r => r._id !== id));
     } catch {
       toast.error('Failed to delete review');
     } finally {
@@ -101,8 +101,8 @@ export default function AdminReviewsPage() {
 
   // ── client-side filter & search ──────────────────────────────────────────
   const filtered = reviews.filter(r => {
-    const name    = `${r.patient?.firstName || ''} ${r.patient?.lastName || ''}`.toLowerCase();
-    const doctor  = `${r.doctor?.user?.firstName || ''} ${r.doctor?.user?.lastName || ''}`.toLowerCase();
+    const name    = `${r.patientId?.firstName || ''} ${r.patientId?.lastName || ''}`.toLowerCase();
+    const doctor  = `${r.doctorId?.userId?.firstName || ''} ${r.doctorId?.userId?.lastName || ''}`.toLowerCase();
     const comment = (r.comment || '').toLowerCase();
     const term    = search.toLowerCase();
     const matchSearch = !search || name.includes(term) || doctor.includes(term) || comment.includes(term);
@@ -190,18 +190,18 @@ export default function AdminReviewsPage() {
         ) : (
           <div className="divide-y divide-neutral-50">
             {filtered.map(review => {
-              const patientName = `${review.patient?.firstName || 'Patient'} ${review.patient?.lastName || ''}`.trim();
-              const doctorName  = review.doctor?.user
-                ? `Dr. ${review.doctor.user.firstName} ${review.doctor.user.lastName}`
+              const patientName = `${review.patientId?.firstName || 'Patient'} ${review.patientId?.lastName || ''}`.trim();
+              const doctorName  = review.doctorId?.userId
+                ? `Dr. ${review.doctorId.userId.firstName} ${review.doctorId.userId.lastName}`
                 : 'Our Team';
-              const specialty   = review.doctor?.specialty || '';
-              const initials    = `${(review.patient?.firstName || 'P')[0]}${(review.patient?.lastName || 'A')[0]}`.toUpperCase();
+              const specialty   = review.doctorId?.specialty || '';
+              const initials    = `${(review.patientId?.firstName || 'P')[0]}${(review.patientId?.lastName || 'A')[0]}`.toUpperCase();
               const date        = new Date(review.createdAt).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
-              const isApproving = actionLoading === review.id + '-approve';
-              const isDeleting  = actionLoading === review.id + '-delete';
+              const isApproving = actionLoading === review._id + '-approve';
+              const isDeleting  = actionLoading === review._id + '-delete';
 
               return (
-                <div key={review.id} className="p-6 hover:bg-neutral-50/60 transition-colors">
+                <div key={review._id} className="p-6 hover:bg-neutral-50/60 transition-colors">
                   <div className="flex flex-col lg:flex-row gap-5">
 
                     {/* Avatar + meta */}
@@ -256,7 +256,7 @@ export default function AdminReviewsPage() {
                       <div className="flex gap-2">
                         {!review.isApproved && (
                           <button
-                            onClick={() => handleApprove(review.id)}
+                            onClick={() => handleApprove(review._id)}
                             disabled={isApproving}
                             title="Approve & publish"
                             className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-xs font-semibold transition-colors disabled:opacity-60"
@@ -269,7 +269,7 @@ export default function AdminReviewsPage() {
                           </button>
                         )}
                         <button
-                          onClick={() => handleDelete(review.id)}
+                          onClick={() => handleDelete(review._id)}
                           disabled={isDeleting}
                           title="Delete permanently"
                           className="flex items-center gap-1.5 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl text-xs font-semibold transition-colors disabled:opacity-60"

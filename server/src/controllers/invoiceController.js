@@ -130,7 +130,7 @@ async function deleteInvoice(req, res, next) {
 async function createPaymentIntent(req, res, next) {
   try {
     const stripe = getStripe();
-    if (!stripe) throw new AppError('Payment processing is not available.', 503, ErrorCodes.SERVICE_UNAVAILABLE);
+    if (!stripe) throw new AppError('Stripe payment processing is not configured. Please try Razorpay or contact support.', 503, ErrorCodes.SERVICE_UNAVAILABLE);
 
     const invoice = await Invoice.findById(req.params.id);
     if (!invoice) throw new AppError('Invoice not found.', 404, ErrorCodes.NOT_FOUND);
@@ -163,7 +163,7 @@ async function createPaymentIntent(req, res, next) {
 async function createRazorpayOrder(req, res, next) {
   try {
     const razorpay = getRazorpay();
-    if (!razorpay) throw new AppError('Razorpay is not configured.', 503, ErrorCodes.SERVICE_UNAVAILABLE);
+    if (!razorpay) throw new AppError('Razorpay is not configured. Please try Stripe or contact support.', 503, ErrorCodes.SERVICE_UNAVAILABLE);
 
     const invoice = await Invoice.findById(req.params.id);
     if (!invoice) throw new AppError('Invoice not found.', 404, ErrorCodes.NOT_FOUND);

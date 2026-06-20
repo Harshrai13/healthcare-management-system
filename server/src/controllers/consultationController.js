@@ -1,9 +1,13 @@
 const { Appointment, Consultation } = require('../models');
-const { generateVideoToken, createVideoRoom } = require('../config/twilio');
+const { generateVideoToken, createVideoRoom, isTwilioConfigured } = require('../config/twilio');
 const { AppError, ErrorCodes } = require('../utils/AppError');
 
 async function startConsultation(req, res, next) {
   try {
+    if (!isTwilioConfigured()) {
+      throw new AppError('Video consultations are not yet configured. Please contact the administrator to set up Twilio credentials.', 503, ErrorCodes.SERVICE_UNAVAILABLE);
+    }
+
     const { appointmentId } = req.params;
     const appointment = await Appointment.findById(appointmentId)
       .populate({ path: 'doctorId', populate: { path: 'userId', select: 'firstName lastName' } })

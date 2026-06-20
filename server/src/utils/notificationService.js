@@ -19,12 +19,15 @@ async function createNotification({ userId, type, title, message }) {
 
 /**
  * Send email notification (fire-and-forget, logs errors)
+ * Returns { emailSent: boolean } so callers can react
  */
 async function sendEmailNotification(to, templateName, data) {
   try {
-    await sendTemplateEmail(to, templateName, data);
+    const result = await sendTemplateEmail(to, templateName, data);
+    return result;
   } catch (error) {
     logger.error('Failed to send email notification', { to, templateName, error: error.message });
+    return { emailSent: false, error: error.message };
   }
 }
 

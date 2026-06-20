@@ -37,14 +37,15 @@ async function register(req, res, next) {
     console.log(`   VERIFICATION CODE for ${email}: ${otp}`);
     console.log('═══════════════════════════════════════════\n\n');
 
-    // Send verification email (fire-and-forget)
-    sendEmailNotification(user.email, 'emailVerification', { firstName: user.firstName, otp });
+    // Send verification email and track result
+    const emailResult = await sendEmailNotification(user.email, 'emailVerification', { firstName: user.firstName, otp });
 
-    logger.info('User registered', { userId: user._id, email: user.email });
+    logger.info('User registered', { userId: user._id, email: user.email, emailSent: emailResult?.emailSent });
     res.status(201).json({
       success: true,
       message: 'Account created. Please check your email to verify your account.',
       data: { userId: user._id, email: user.email },
+      emailSent: emailResult?.emailSent ?? false,
       // DEV ONLY: OTP shown in response for testing (remove in production)
       ...(process.env.NODE_ENV === 'development' && { devOtp: otp }),
     });
@@ -135,15 +136,16 @@ async function forgotPassword(req, res, next) {
 
     // Log OTP to console for immediate visibility
     console.log('\n\n ═══════════════════════════════════════════');
-    console.log(`   PASSWORD RESET CODE for ${email}: ${otp}`);
+    console.log(`   VERIFICATION CODE for ${email}: ${otp}`);
     console.log('═══════════════════════════════════════════\n\n');
 
     logger.info('Password reset OTP generated', { userId: user._id });
 
-    // Send OTP via email (fire-and-forget)
-    sendEmailNotification(user.email, 'otpPasswordReset', { firstName: user.firstName, otp });
+    // Send OTP via email and track result
+    const emailResult = await sendEmailNotification(user.email, 'otpPasswordReset', { firstName: user.firstName, otp });
 
     res.json({ success: true, message: 'If an account exists with this email, a reset code has been sent.',
+      emailSent: emailResult?.emailSent ?? false,
       // DEV ONLY: OTP shown in response for testing (remove in production)
       ...(process.env.NODE_ENV === 'development' && { devOtp: otp }),
     });
@@ -323,9 +325,9 @@ async function resendVerification(req, res, next) {
     console.log(`   VERIFICATION CODE for ${email}: ${otp}`);
     console.log('═══════════════════════════════════════════\n\n');
 
-    sendEmailNotification(user.email, 'emailVerification', { firstName: user.firstName, otp });
-    logger.info('Verification email resent', { userId: user._id });
-    res.json({ success: true, message: 'Verification code sent to your email.' });
+    const emailResult = await sendEmailNotification(user.email, 'emailVerification', { firstName: user.firstName, otp });
+    logger.info('Verification email resent', { userId: user._id, emailSent: emailResult?.emailSent });
+    res.json({ success: true, message: 'Verification code sent to your email.', emailSent: emailResult?.emailSent ?? false });
   } catch (error) { next(error); }
 }
 

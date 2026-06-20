@@ -45,7 +45,7 @@ async function sendEmail({ to, subject, html, text }) {
         console.log(`   VERIFICATION CODE for ${to}: ${otpMatch[1].trim()}`);
         console.log('═══════════════════════════════════════════\n\n');
       }
-      return { messageId: 'dev-console-fallback' };
+      return { messageId: 'dev-console-fallback', emailSent: false };
     }
 
     const info = await transport.sendMail({
@@ -56,10 +56,10 @@ async function sendEmail({ to, subject, html, text }) {
       text,
     });
     logger.info('Email sent successfully', { to, subject, messageId: info.messageId });
-    return info;
+    return { ...info, emailSent: true };
   } catch (error) {
     logger.error('Email send failed', { to, subject, error: error.message });
-    throw error;
+    return { messageId: null, emailSent: false, error: error.message };
   }
 }
 
@@ -354,11 +354,11 @@ async function sendTemplateEmail(to, templateName, data) {
   const template = emailTemplates[templateName];
   if (!template) {
     logger.error('Email template not found', { templateName });
-    return;
+    return { emailSent: false, error: 'Template not found' };
   }
 
   const emailContent = typeof template === 'function' ? template(data) : template;
-  await sendEmail({ to, ...emailContent });
+  return await sendEmail({ to, ...emailContent });
 }
 
 module.exports = { sendEmail, sendTemplateEmail, emailTemplates };

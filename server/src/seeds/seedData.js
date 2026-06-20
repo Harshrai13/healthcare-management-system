@@ -1,5 +1,5 @@
 const bcrypt = require('bcryptjs');
-const { User, DoctorProfile, Service, Appointment } = require('../models');
+const { User, DoctorProfile, Service, Appointment, Review } = require('../models');
 
 const services = [
   { name: 'Family Medicine', slug: 'family-medicine', description: 'Comprehensive healthcare for patients of all ages, from routine checkups to chronic disease management.', icon: 'family', sortOrder: 1 },
@@ -31,6 +31,7 @@ async function seedDatabase() {
     DoctorProfile.deleteMany({}),
     Service.deleteMany({}),
     Appointment.deleteMany({}),
+    Review.deleteMany({}),
   ]);
 
   const passwordHash = await bcrypt.hash('Admin@123', 12);
@@ -176,6 +177,36 @@ async function seedDatabase() {
     },
   ]);
   console.log('  3 sample appointments created');
+
+  // Seed sample reviews (approved, linked to seeded doctors)
+  const reviews = [
+    { patientId: patientUsers[0]._id, doctorId: doctorProfiles[0]._id, rating: 5, comment: 'Dr. Chen is absolutely wonderful. She took the time to listen to all my concerns and explained everything clearly. Highly recommend!', isApproved: true, isFeatured: true },
+    { patientId: patientUsers[1]._id, doctorId: doctorProfiles[0]._id, rating: 5, comment: 'Best family doctor I have ever had. The entire staff at VerdantCare is professional and caring.', isApproved: true, isFeatured: true },
+    { patientId: patientUsers[2]._id, doctorId: doctorProfiles[1]._id, rating: 5, comment: 'Dr. Wilson is amazing with kids. My son actually looks forward to his checkups now!', isApproved: true, isFeatured: true },
+    { patientId: patientUsers[0]._id, doctorId: doctorProfiles[1]._id, rating: 4, comment: 'Great pediatrician. Very thorough and gentle. Only minor wait time issue.', isApproved: true },
+    { patientId: patientUsers[1]._id, doctorId: doctorProfiles[2]._id, rating: 5, comment: 'The video consultation was seamless. Dr. Rodriguez was just as attentive as an in-person visit. Very convenient!', isApproved: true, isFeatured: true },
+    { patientId: patientUsers[2]._id, doctorId: doctorProfiles[2]._id, rating: 4, comment: 'Good telehealth experience. Doctor was knowledgeable and the platform worked well.', isApproved: true },
+    { patientId: patientUsers[0]._id, doctorId: doctorProfiles[0]._id, rating: 5, comment: 'I have been seeing Dr. Chen for 3 years now. She is thorough, compassionate, and always available when needed.', isApproved: true },
+    { patientId: patientUsers[1]._id, doctorId: doctorProfiles[1]._id, rating: 4, comment: 'Dr. Wilson diagnosed my daughter\'s condition when other doctors missed it. Very grateful!', isApproved: true },
+  ];
+
+  await Review.insertMany(reviews);
+  console.log(`  ${reviews.length} sample reviews created`);
+
+  // Update doctor ratings based on seeded reviews
+  for (const profile of doctorProfiles) {
+    const avgResult = await Review.aggregate([
+      { $match: { doctorId: profile._id, isApproved: true } },
+      { $group: { _id: null, avgRating: { $avg: '$rating' }, count: { $sum: 1 } } },
+    ]);
+    if (avgResult[0]) {
+      await DoctorProfile.findByIdAndUpdate(profile._id, {
+        rating: avgResult[0].avgRating,
+        reviewCount: avgResult[0].count,
+      });
+    }
+  }
+  console.log('  Doctor ratings updated from reviews');
 
   console.log('\n  ── Demo Credentials ──');
   console.log('  Admin:    admin@verdantcare.com / Admin@123');

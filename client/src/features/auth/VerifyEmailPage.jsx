@@ -75,8 +75,12 @@ function VerifyEmailPage() {
   const handleResend = async () => {
     setIsResending(true);
     try {
-      await authAPI.resendVerification(email);
-      toast.success('A new verification code has been sent to your email.');
+      const response = await authAPI.resendVerification(email);
+      if (response.data?.emailSent === false) {
+        toast('Email service is not configured. Please contact support to set up SMTP.', { icon: '⚠️', duration: 8000 });
+      } else {
+        toast.success('A new verification code has been sent to your email.');
+      }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to resend code. Please try again.');
     } finally {

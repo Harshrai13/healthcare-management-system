@@ -57,6 +57,8 @@ function ForgotPasswordPage() {
       // DEV ONLY: Show OTP from response for testing
       if (response.data?.devOtp) {
         toast.success(`Reset code: ${response.data.devOtp}`, { duration: 10000 });
+      } else if (response.data?.emailSent === false) {
+        toast('Email service not configured. Please contact support.', { icon: '⚠️', duration: 8000 });
       } else {
         toast.success('A 4-digit code has been sent to your email!');
       }
@@ -119,6 +121,8 @@ function ForgotPasswordPage() {
       // DEV ONLY: Show OTP from response for testing
       if (response.data?.devOtp) {
         toast.success(`New code: ${response.data.devOtp}`, { duration: 10000 });
+      } else if (response.data?.emailSent === false) {
+        toast('Email service not configured. Please contact support.', { icon: '⚠️', duration: 8000 });
       } else {
         toast.success('A new code has been sent!');
       }

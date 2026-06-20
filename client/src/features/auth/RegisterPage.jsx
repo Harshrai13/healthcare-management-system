@@ -63,6 +63,8 @@ function RegisterPage() {
       // DEV ONLY: Show OTP from response for testing
       if (response.data?.devOtp) {
         toast.success(`Verification code: ${response.data.devOtp}`, { duration: 10000 });
+      } else if (response.data?.emailSent === false) {
+        toast('Account created but email could not be sent. Please contact support or check Render SMTP settings.', { icon: '⚠️', duration: 8000 });
       } else {
         toast.success('Account created! Please check your email for the verification code.');
       }
