@@ -13,21 +13,28 @@ function isSmtpConfigured() {
 }
 
 function getTransporter() {
+  // Don't cache null — retry if SMTP config was added after startup
   if (transporter) return transporter;
 
   if (!isSmtpConfigured()) {
     return null;
   }
 
-  transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT, 10) || 587,
-    secure: process.env.SMTP_PORT === '465',
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
+  try {
+    transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT, 10) || 587,
+      secure: process.env.SMTP_PORT === '465',
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+    logger.info('SMTP transporter created successfully', { host: process.env.SMTP_HOST, port: process.env.SMTP_PORT });
+  } catch (err) {
+    logger.error('Failed to create SMTP transporter', { error: err.message });
+    return null;
+  }
 
   return transporter;
 }
