@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Video, Calendar, Clock, CheckCircle, XCircle, AlertCircle, Play } from 'lucide-react';
+import { Video, Calendar, Clock, CheckCircle, XCircle, AlertCircle, Play, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { appointmentsAPI } from '../../api/appointmentsAPI';
 import { consultationsAPI } from '../../api/generalAPI';
@@ -69,6 +69,24 @@ export default function PatientAppointmentsPage() {
 
     return { upcoming: upcomingAppts, past: pastAppts, videoConsultations: videoAppts };
   }, [appointmentsData, consultationsData, todayStr]);
+
+  const cancelMutation = useMutation({
+    mutationFn: (id) => appointmentsAPI.cancel(id),
+    onSuccess: () => {
+      toast.success('Appointment cancelled successfully.');
+      queryClient.invalidateQueries({ queryKey: ['patient_appointments'] });
+      queryClient.invalidateQueries({ queryKey: ['patient_consultations'] });
+    },
+    onError: (err) => {
+      toast.error(err?.response?.data?.message || 'Failed to cancel appointment.');
+    },
+  });
+
+  const handleCancel = (appointmentId) => {
+    if (window.confirm('Are you sure you want to cancel this appointment?')) {
+      cancelMutation.mutate(appointmentId);
+    }
+  };
 
   const joinCall = (consultation) => {
     if (!consultation?._id) {
@@ -207,13 +225,22 @@ export default function PatientAppointmentsPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     {canJoin && (
                       <button
                         onClick={() => joinCall(consultation)}
                         className="btn-primary text-sm py-2 flex items-center gap-2"
                       >
                         <Play size={14} /> {consultation.status === 'IN_PROGRESS' ? 'Join Call' : 'Waiting...'}
+                      </button>
+                    )}
+                    {(appt.status === 'PENDING' || appt.status === 'CONFIRMED') && (
+                      <button
+                        onClick={() => handleCancel(appt._id)}
+                        disabled={cancelMutation.isPending}
+                        className="text-sm py-2 px-3 flex items-center gap-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors font-medium disabled:opacity-50"
+                      >
+                        <X size={14} /> Cancel
                       </button>
                     )}
                     {appt.status === 'CONFIRMED' && !canJoin && (
