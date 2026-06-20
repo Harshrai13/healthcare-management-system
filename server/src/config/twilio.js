@@ -2,8 +2,17 @@ const twilio = require('twilio');
 
 let twilioClient = null;
 
+function isTwilioConfigured() {
+  return !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN);
+}
+
 function getTwilioClient() {
   if (twilioClient) return twilioClient;
+
+  if (!isTwilioConfigured()) {
+    console.warn('Twilio not configured (TWILIO_ACCOUNT_SID/TWILIO_AUTH_TOKEN missing) — SMS/video disabled');
+    return null;
+  }
 
   twilioClient = twilio(
     process.env.TWILIO_ACCOUNT_SID,
@@ -14,6 +23,10 @@ function getTwilioClient() {
 }
 
 async function generateVideoToken(identity, roomName) {
+  if (!isTwilioConfigured()) {
+    throw new Error('Twilio is not configured. Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_API_KEY_SID, and TWILIO_API_KEY_SECRET.');
+  }
+
   const AccessToken = twilio.jwt.AccessToken;
   const VideoGrant = AccessToken.VideoGrant;
 
@@ -32,6 +45,7 @@ async function generateVideoToken(identity, roomName) {
 
 async function createVideoRoom(uniqueName) {
   const client = getTwilioClient();
+  if (!client) throw new Error('Twilio is not configured.');
   const room = await client.video.v1.rooms.create({
     uniqueName,
     type: 'group-small',
@@ -43,6 +57,7 @@ async function createVideoRoom(uniqueName) {
 
 async function sendSMS(to, body) {
   const client = getTwilioClient();
+  if (!client) throw new Error('Twilio is not configured.');
   const message = await client.messages.create({
     body,
     from: process.env.TWILIO_PHONE_NUMBER,
@@ -51,4 +66,4 @@ async function sendSMS(to, body) {
   return message;
 }
 
-module.exports = { getTwilioClient, generateVideoToken, createVideoRoom, sendSMS };
+module.exports = { getTwilioClient, generateVideoToken, createVideoRoom, sendSMS, isTwilioConfigured };

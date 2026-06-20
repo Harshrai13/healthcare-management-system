@@ -3,8 +3,21 @@ const logger = require('./logger');
 
 let transporter = null;
 
+function isSmtpConfigured() {
+  return !!(
+    process.env.SMTP_HOST &&
+    process.env.SMTP_USER &&
+    process.env.SMTP_PASS &&
+    !process.env.SMTP_USER.startsWith('your-') // Detect placeholder values
+  );
+}
+
 function getTransporter() {
   if (transporter) return transporter;
+
+  if (!isSmtpConfigured()) {
+    return null;
+  }
 
   transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
@@ -22,6 +35,19 @@ function getTransporter() {
 async function sendEmail({ to, subject, html, text }) {
   try {
     const transport = getTransporter();
+
+    if (!transport) {
+      // SMTP not configured — log to console (development / unconfigured production)
+      logger.warn('SMTP not configured — email logged to console only');
+      const otpMatch = html?.match(/font-size:\s*36px[^>]*>([\d\s]+)</);
+      if (otpMatch) {
+        console.log('\n\n ═══════════════════════════════════════════');
+        console.log(`   VERIFICATION CODE for ${to}: ${otpMatch[1].trim()}`);
+        console.log('═══════════════════════════════════════════\n\n');
+      }
+      return { messageId: 'dev-console-fallback' };
+    }
+
     const info = await transport.sendMail({
       from: process.env.EMAIL_FROM || 'noreply@verdantcare.com',
       to,
@@ -33,18 +59,6 @@ async function sendEmail({ to, subject, html, text }) {
     return info;
   } catch (error) {
     logger.error('Email send failed', { to, subject, error: error.message });
-
-    // Fallback: If SMTP is not configured, log OTP/code to console for development
-    if (!process.env.SMTP_HOST) {
-      // Extract any OTP or code from the HTML for console display
-      const otpMatch = html?.match(/font-size:\s*36px[^>]*>([\d\s]+)</);
-      if (otpMatch) {
-        console.log('\n\n ═══════════════════════════════════════════');
-        console.log(`   VERIFICATION CODE for ${to}: ${otpMatch[1].trim()}`);
-        console.log('═══════════════════════════════════════════\n\n');
-      }
-      return { messageId: 'dev-console-fallback' };
-    }
     throw error;
   }
 }

@@ -10,6 +10,7 @@ services:
       cd ../client && npm install &&
       cd .. && npm run build
     startCommand: npm start
+    healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
@@ -25,7 +26,3 @@ services:
         value: 15m
       - key: JWT_REFRESH_EXPIRY
         value: 7d
-      - key: CLIENT_URL
-        value: https://verdantcare.onrender.com
-      - key: FRONTEND_URL
-        value: https://verdantcare.onrender.com

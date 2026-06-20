@@ -38,15 +38,11 @@ const logger = winston.createLogger({
       maxsize: 10 * 1024 * 1024,
       maxFiles: 5,
     }),
-  ],
-});
-
-if (process.env.NODE_ENV !== 'production') {
-  logger.add(
+    // Always log to console (required for Render/cloud platforms to see logs)
     new winston.transports.Console({
       format: consoleFormat,
-    })
-  );
-}
+    }),
+  ],
+});
 
 module.exports = logger;

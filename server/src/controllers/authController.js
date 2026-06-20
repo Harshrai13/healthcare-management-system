@@ -9,7 +9,9 @@ const logger = require('../utils/logger');
 const { sendEmailNotification } = require('../utils/notificationService');
 const { verifyTOTP } = require('../utils/twoFactor');
 
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const googleClient = process.env.GOOGLE_CLIENT_ID
+  ? new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
+  : null;
 
 async function register(req, res, next) {
   try {
@@ -206,6 +208,8 @@ async function resetPassword(req, res, next) {
 
 async function googleAuth(req, res, next) {
   try {
+    if (!googleClient) throw new AppError('Google Sign-In is not configured. Set GOOGLE_CLIENT_ID.', 503, ErrorCodes.SERVICE_UNAVAILABLE);
+
     const { credential } = req.body;
 
     // Verify Google ID token

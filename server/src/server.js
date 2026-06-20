@@ -1,5 +1,11 @@
 require('dotenv').config();
 
+// Auto-detect Render URL for CORS and frontend links
+if (process.env.RENDER_EXTERNAL_URL) {
+  if (!process.env.CLIENT_URL) process.env.CLIENT_URL = process.env.RENDER_EXTERNAL_URL;
+  if (!process.env.FRONTEND_URL) process.env.FRONTEND_URL = process.env.RENDER_EXTERNAL_URL;
+}
+
 const http = require('http');
 const app = require('./app');
 const { connectDatabase, disconnectDatabase } = require('./config/database');
