@@ -1,7 +1,6 @@
 const { Notification } = require('../models');
 const { sendTemplateEmail } = require('./emailService');
 const logger = require('./logger');
-const { emitToUser } = require('../config/socket');
 
 /**
  * Create an in-app notification for a user
@@ -9,7 +8,8 @@ const { emitToUser } = require('../config/socket');
 async function createNotification({ userId, type, title, message }) {
   try {
     const notification = await Notification.create({ userId, type, title, message });
-    // Emit real-time notification via Socket.io
+    // Emit real-time notification via Socket.io (lazy require to avoid circular dependency)
+    const { emitToUser } = require('../config/socket');
     emitToUser(userId, 'notification:new', notification);
     return notification;
   } catch (error) {
