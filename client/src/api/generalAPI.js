@@ -44,6 +44,7 @@ export const adminAPI = {
   getAnalytics: (params) => api.get('/admin/analytics', { params }),
   getUsers: (params) => api.get('/admin/users', { params }),
   updateUserRole: (id, role) => api.put(`/admin/users/${id}/role`, { role }),
+  createDoctor: (data) => api.post('/admin/doctors', data),
   getAuditLogs: (params) => api.get('/admin/audit-logs', { params }),
 };
 
@@ -73,4 +74,5 @@ export const insuranceAPI = {
 export const settingsAPI = {
   get: () => api.get('/settings'),
   update: (data) => api.put('/settings', data),
+  uploadLogo: (formData) => api.post('/settings/logo', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
 };

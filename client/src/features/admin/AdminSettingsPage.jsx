@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Save, Bell, Shield, Globe, CreditCard, Layout } from 'lucide-react';
+import { Save, Bell, Shield, Globe, CreditCard, Layout, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { settingsAPI } from '../../api/generalAPI';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -21,6 +21,8 @@ export default function AdminSettingsPage() {
     paymentGateway: 'razorpay',
     invoiceDuePeriod: '14 days',
   });
+
+  const fileInputRef = useRef(null);
 
   const { isLoading } = useQuery({
     queryKey: ['platform_settings'],
@@ -46,6 +48,38 @@ export default function AdminSettingsPage() {
 
   const handleChange = (field, value) => {
     setSettings((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const logoMutation = useMutation({
+    mutationFn: async (file) => {
+      const formData = new FormData();
+      formData.append('logo', file);
+      const { data } = await settingsAPI.uploadLogo(formData);
+      return data;
+    },
+    onSuccess: (data) => {
+      setSettings((prev) => ({ ...prev, logoUrl: data.data.logoUrl }));
+      toast.success('Logo uploaded successfully');
+    },
+    onError: (err) => {
+      const msg = err?.response?.data?.message || 'Failed to upload logo';
+      toast.error(msg);
+    },
+  });
+
+  const handleLogoUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!['image/png', 'image/jpeg', 'image/jpg'].includes(file.type)) {
+      toast.error('Only PNG or JPG images are allowed');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size must be less than 5MB');
+      return;
+    }
+    logoMutation.mutate(file);
+    e.target.value = '';
   };
 
   const handleSave = () => {
@@ -285,13 +319,30 @@ export default function AdminSettingsPage() {
           <div className="bg-white rounded-3xl p-8 border border-neutral-100 shadow-sm">
             <h2 className="text-xl font-bold text-neutral-900 mb-6 border-b border-neutral-100 pb-4">Branding</h2>
             <div className="flex items-center gap-6">
-              <div className="w-24 h-24 bg-primary-100 text-primary-700 rounded-2xl flex items-center justify-center font-black text-3xl shadow-inner">
-                V
-              </div>
+              {settings.logoUrl ? (
+                <img src={settings.logoUrl} alt="Logo" className="w-24 h-24 rounded-2xl object-cover shadow-inner" />
+              ) : (
+                <div className="w-24 h-24 bg-primary-100 text-primary-700 rounded-2xl flex items-center justify-center font-black text-3xl shadow-inner">
+                  V
+                </div>
+              )}
               <div>
-                <button className="btn-outline text-sm mb-2">Upload New Logo</button>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={logoMutation.isPending}
+                  className="btn-outline text-sm mb-2 flex items-center gap-2 disabled:opacity-50"
+                >
+                  <Upload size={16} /> {logoMutation.isPending ? 'Uploading...' : 'Upload New Logo'}
+                </button>
                 <p className="text-xs text-neutral-500">Recommended size: 512x512px. PNG or JPG.</p>
               </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/jpg"
+                onChange={handleLogoUpload}
+                className="hidden"
+              />
             </div>
           </div>
         </div>

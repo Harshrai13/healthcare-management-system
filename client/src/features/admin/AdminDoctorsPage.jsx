@@ -33,16 +33,24 @@ export default function AdminDoctorsPage() {
 
   const addDoctorMutation = useMutation({
     mutationFn: async (newDoctor) => {
-      const { data } = await adminAPI.updateUserRole('new', newDoctor);
+      const { data } = await adminAPI.createDoctor(newDoctor);
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['admin_doctors'] });
       setIsModalOpen(false);
       setFormData({ firstName: '', lastName: '', email: '', specialty: '', experience: '' });
-      toast.success('Doctor added successfully');
+      const tempPwd = data?.data?.tempPassword;
+      toast.success(
+        tempPwd
+          ? `Doctor added! Temporary password: ${tempPwd} — please share it securely.`
+          : 'Doctor added successfully'
+      );
     },
-    onError: () => toast.error('Failed to add doctor'),
+    onError: (err) => {
+      const msg = err?.response?.data?.message || 'Failed to add doctor';
+      toast.error(msg);
+    },
   });
 
   if (isLoading) return <LoadingSpinner />;

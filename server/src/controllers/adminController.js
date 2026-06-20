@@ -2,6 +2,8 @@ const { User, DoctorProfile, Appointment, Payment, AuditLog } = require('../mode
 const { AppError, ErrorCodes } = require('../utils/AppError');
 const logger = require('../utils/logger');
 const { generateAuthTokens } = require('../utils/token');
+const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 
 async function loginAsUser(req, res, next) {
   try {
@@ -106,4 +108,58 @@ async function getAuditLogs(req, res, next) {
   } catch (error) { next(error); }
 }
 
-module.exports = { getDashboard, getAnalytics, getUsers, updateUserRole, getAuditLogs, loginAsUser, searchUsers };
+async function createDoctor(req, res, next) {
+  try {
+    const { firstName, lastName, email, specialty, experience } = req.body;
+    if (!firstName || !lastName || !email) {
+      throw new AppError('First name, last name and email are required.', 400, ErrorCodes.VALIDATION_ERROR);
+    }
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (existingUser) {
+      throw new AppError('A user with this email already exists.', 400, ErrorCodes.VALIDATION_ERROR);
+    }
+    // Generate a temporary password
+    const tempPassword = crypto.randomBytes(8).toString('hex');
+    const passwordHash = await bcrypt.hash(tempPassword, 12);
+
+    const user = await User.create({
+      email: email.toLowerCase(),
+      passwordHash,
+      firstName,
+      lastName,
+      role: 'DOCTOR',
+      isActive: true,
+      isVerified: true,
+    });
+
+    const doctorProfile = await DoctorProfile.create({
+      userId: user._id,
+      specialty: specialty || 'General Practice',
+      experienceYears: parseInt(experience) || 0,
+      consultationModes: ['IN_PERSON', 'VIDEO'],
+      isAvailable: true,
+    });
+
+    logger.info('Doctor created by admin', { adminId: req.user.id, doctorId: user._id });
+    await AuditLog.create({
+      userId: req.user.id,
+      action: 'CREATE_DOCTOR',
+      entity: 'User',
+      entityId: user._id.toString(),
+      newValue: JSON.stringify({ email: user.email, specialty: doctorProfile.specialty }),
+      ipAddress: req.ip,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Doctor added successfully. Temporary password: ' + tempPassword,
+      data: {
+        user: { _id: user._id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role },
+        doctorProfile,
+        tempPassword,
+      },
+    });
+  } catch (error) { next(error); }
+}
+
+module.exports = { getDashboard, getAnalytics, getUsers, updateUserRole, getAuditLogs, loginAsUser, searchUsers, createDoctor };
