@@ -23,13 +23,13 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://checkout.razorpay.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://checkout.razorpay.com", "https://js.stripe.com"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "https:", "blob:"],
-      connectSrc: ["'self'", "wss:", "ws:"],
-      mediaSrc: ["'self'"],
-      frameSrc: ["'self'", "https://checkout.razorpay.com"],
+      connectSrc: ["'self'", "wss:", "ws:", "https://api.stripe.com"],
+      mediaSrc: ["'self'", "blob:", "mediastream:"],
+      frameSrc: ["'self'", "https://checkout.razorpay.com", "https://js.stripe.com", "https://hooks.stripe.com"],
     },
   },
   crossOriginEmbedderPolicy: false,

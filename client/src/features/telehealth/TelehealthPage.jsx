@@ -87,7 +87,17 @@ export default function TelehealthPage() {
         setLoading(false);
       } catch (err) {
         console.error('Telehealth init error:', err);
-        toast.error('Could not connect. Check media permissions.');
+        let msg = 'Could not connect to video room.';
+        if (err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError') {
+          msg = 'Camera/microphone access denied. Please allow permissions in your browser settings.';
+        } else if (err?.name === 'NotFoundError' || err?.name === 'DevicesNotFoundError') {
+          msg = 'No camera or microphone found on this device.';
+        } else if (err?.response) {
+          msg = err.response.data?.message || 'Failed to load consultation. Please try again.';
+        } else if (err?.message?.includes('getUserMedia')) {
+          msg = 'Could not access camera/microphone. Please check browser permissions.';
+        }
+        toast.error(msg);
         navigate(user?.role === 'DOCTOR' ? '/doctor/consultations' : '/dashboard/appointments');
         setLoading(false);
       }
