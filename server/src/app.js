@@ -6,6 +6,7 @@ const cookieParser = require('cookie-parser');
 const morgan = require('morgan');
 const hpp = require('hpp');
 const mongoSanitize = require('express-mongo-sanitize');
+const path = require('path');
 
 const routes = require('./routes');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
@@ -18,7 +19,21 @@ const app = express();
 
 app.set('trust proxy', 1);
 
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://checkout.razorpay.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https:", "blob:"],
+      connectSrc: ["'self'", "wss:", "ws:"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'self'", "https://checkout.razorpay.com"],
+    },
+  },
+  crossOriginEmbedderPolicy: false,
+}));
 
 const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
   .split(',').map(s => s.trim());
@@ -68,8 +83,24 @@ app.get('/health', (req, res) => {
 
 app.use('/api', routes);
 
+// ─── 404 for unmatched API routes ────────────────────────────────
+app.use('/api', notFoundHandler);
+
+// ─── Serve React frontend in production ──────────────────────────
+if (process.env.NODE_ENV === 'production') {
+  const clientBuildPath = path.join(__dirname, '../../client/dist');
+  app.use(express.static(clientBuildPath));
+
+  // SPA fallback: any non-API GET route serves index.html (React Router handles it)
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(clientBuildPath, 'index.html'));
+  });
+} else {
+  app.use(notFoundHandler);
+}
+
+// ─── Global error handlers (must be last) ────────────────────────
 app.use(handleUploadError);
-app.use(notFoundHandler);
 app.use(errorHandler);
 
 module.exports = app;
