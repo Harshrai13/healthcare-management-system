@@ -33,8 +33,8 @@ export default function AdminDoctorsPage() {
 
   const stats = useMemo(() => {
     const total = doctors.length;
-    const active = doctors.filter((d) => d.status === 'ACTIVE' || d.status === 'active').length;
-    const pending = doctors.filter((d) => d.status === 'PENDING' || d.status === 'pending').length;
+    const active = doctors.filter((d) => d.isActive === true || d.isAvailable === true).length;
+    const pending = doctors.filter((d) => d.isActive === false && !d.isVerified).length;
     const avgRating = doctors.reduce((sum, d) => sum + (d.rating || 0), 0) / (total || 1);
     return { total, active, pending, avgRating: avgRating.toFixed(1) };
   }, [doctors]);
@@ -140,10 +140,8 @@ export default function AdminDoctorsPage() {
                 </div>
 
                 <div className="flex items-center justify-between pt-4 border-t border-neutral-100">
-                  {(doc.status === 'ACTIVE' || doc.status === 'active') ? (
+                  {doc.isActive === true ? (
                     <span className="flex items-center gap-1 text-xs font-bold text-emerald-600"><CheckCircle size={14} /> Active</span>
-                  ) : (doc.status === 'PENDING' || doc.status === 'pending') ? (
-                    <span className="flex items-center gap-1 text-xs font-bold text-yellow-600"><Clock size={14} /> Pending</span>
                   ) : (
                     <span className="flex items-center gap-1 text-xs font-bold text-red-600"><XCircle size={14} /> Inactive</span>
                   )}
