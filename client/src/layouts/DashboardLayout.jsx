@@ -19,11 +19,10 @@ function DashboardLayout() {
   const { sidebarOpen } = useSelector((state) => state.ui);
 
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const searchRef = useRef(null);
 
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, panelOpen: notificationsOpen, setPanelOpen: setNotificationsOpen } = useNotifications();
   const { query, setQuery, results, loading: searchLoading, navigateTo } = useDashboardSearch();
 
   const navItems = useMemo(() => {

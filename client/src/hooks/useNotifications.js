@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/axios';
 import { useSocket } from './useSocket';
@@ -6,6 +6,7 @@ import { useSocket } from './useSocket';
 export function useNotifications() {
   const queryClient = useQueryClient();
   const { socket } = useSocket();
+  const [panelOpen, setPanelOpen] = useState(false);
 
   const { data: notifications = [], isLoading } = useQuery({
     queryKey: ['notifications'],
@@ -15,7 +16,9 @@ export function useNotifications() {
         return data.data?.notifications || [];
       } catch { return []; }
     },
-    refetchInterval: 60000, // fallback poll every 60s (socket handles real-time)
+    enabled: panelOpen, // Only fetch when notification panel is opened
+    staleTime: 5 * 60 * 1000, // 5 min cache
+    refetchInterval: panelOpen ? 120000 : false, // Poll every 2 min only when open
   });
 
   // Listen for real-time notifications via Socket.io
@@ -52,6 +55,8 @@ export function useNotifications() {
     notifications,
     isLoading,
     unreadCount,
+    panelOpen,
+    setPanelOpen,
     markAsRead: markAsRead.mutate,
     markAllAsRead: markAllAsRead.mutate,
   };
