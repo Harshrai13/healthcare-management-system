@@ -6,7 +6,6 @@ const cookieParser = require('cookie-parser');
 const morgan = require('morgan');
 const hpp = require('hpp');
 const mongoSanitize = require('express-mongo-sanitize');
-const path = require('path');
 
 const routes = require('./routes');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
@@ -35,20 +34,13 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
-const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
-  .split(',').map(s => s.trim());
-
+// API-only mode: allow all origins (clients can connect from anywhere)
 app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(null, false);
-    }
-  },
+  origin: true, // Allow all origins
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['X-Total-Count', 'X-Page', 'X-Per-Page'],
 }));
 
 app.use(compression());
@@ -86,18 +78,8 @@ app.use('/api', routes);
 // ─── 404 for unmatched API routes ────────────────────────────────
 app.use('/api', notFoundHandler);
 
-// ─── Serve React frontend in production ──────────────────────────
-if (process.env.NODE_ENV === 'production') {
-  const clientBuildPath = path.join(__dirname, '../../client/dist');
-  app.use(express.static(clientBuildPath));
-
-  // SPA fallback: any non-API GET route serves index.html (React Router handles it)
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(clientBuildPath, 'index.html'));
-  });
-} else {
-  app.use(notFoundHandler);
-}
+// ─── API-only: no frontend serving ───────────────────────────────
+app.use(notFoundHandler);
 
 // ─── Global error handlers (must be last) ────────────────────────
 app.use(handleUploadError);
