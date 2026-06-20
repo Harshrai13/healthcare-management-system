@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, MapPin, Star, Video, Users, Clock, Filter } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { useDoctors } from '../../hooks/useDoctors';
 import { useDebounce } from '../../hooks/useDebounce';
-
-const SPECIALTIES = ['All', 'Cardiology', 'Internal Medicine', 'Pediatrics', 'Neurology', 'Dermatology', 'Orthopedics', 'Family Medicine', "Women's Health", 'Telemedicine'];
+import { servicesAPI } from '../../api/doctorsAPI';
 
 function DoctorsPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -12,6 +12,16 @@ function DoctorsPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const debouncedSearch = useDebounce(searchQuery, 400);
+
+  const { data: services = [] } = useQuery({
+    queryKey: ['services'],
+    queryFn: async () => {
+      const { data } = await servicesAPI.getAll();
+      return data.data || [];
+    },
+  });
+
+  const specialties = ['All', ...services.map((s) => s.name)];
 
   const queryParams = {};
   if (debouncedSearch) queryParams.search = debouncedSearch;
@@ -84,7 +94,7 @@ function DoctorsPage() {
               <div className="mb-8">
                 <h4 className="font-semibold text-sm text-neutral-900 mb-3 uppercase tracking-wider">Specialty</h4>
                 <div className="space-y-2">
-                  {SPECIALTIES.map(spec => (
+                  {specialties.map(spec => (
                     <label key={spec} className="flex items-center gap-3 cursor-pointer group">
                       <div className="relative flex items-center justify-center w-5 h-5 rounded-full border border-neutral-300 bg-white group-hover:border-primary-500 transition-colors">
                         <input

@@ -33,8 +33,15 @@ function AppointmentBooking() {
   const { data: doctorsData } = useQuery({
     queryKey: ['doctors', booking.serviceName],
     queryFn: async () => {
-      const { data } = await api.get(`/doctors?specialty=${encodeURIComponent(booking.serviceName)}`);
-      return data.data.doctors;
+      // First try matching by specialty
+      const { data } = await api.get(`/doctors?specialty=${encodeURIComponent(booking.serviceName)}&available=true`);
+      let doctors = data.data?.doctors || [];
+      // Fallback: if no doctors match, show all available doctors
+      if (doctors.length === 0) {
+        const { data: allData } = await api.get('/doctors?available=true');
+        doctors = allData.data?.doctors || [];
+      }
+      return doctors;
     },
     enabled: !!booking.serviceName,
   });

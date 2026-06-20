@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Search, Star, MoreVertical, CheckCircle, XCircle, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { doctorsAPI } from '../../api/doctorsAPI';
+import { doctorsAPI, servicesAPI } from '../../api/doctorsAPI';
 import { adminAPI } from '../../api/generalAPI';
 import LoadingSpinner from '../../components/LoadingSpinner';
 
@@ -20,6 +20,14 @@ export default function AdminDoctorsPage() {
         const res = await doctorsAPI.getAll({ include: 'all' });
         return res.data.data?.doctors || res.data.data || [];
       })();
+    },
+  });
+
+  const { data: services = [] } = useQuery({
+    queryKey: ['services'],
+    queryFn: async () => {
+      const { data } = await servicesAPI.getAll();
+      return data.data || [];
     },
   });
 
@@ -171,12 +179,9 @@ export default function AdminDoctorsPage() {
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Specialty</label>
                 <select value={formData.specialty} onChange={(e) => setFormData({ ...formData, specialty: e.target.value })} className="w-full rounded-xl border-neutral-200 bg-neutral-50 p-3">
                   <option value="">Select specialty</option>
-                  <option>Cardiology</option>
-                  <option>Pediatrics</option>
-                  <option>Dermatology</option>
-                  <option>Orthopedics</option>
-                  <option>Neurology</option>
-                  <option>General Practice</option>
+                  {services.map((s) => (
+                    <option key={s._id} value={s.name}>{s.name}</option>
+                  ))}
                 </select>
               </div>
               <div>
