@@ -69,7 +69,8 @@ function RegisterPage() {
       toast.success('Account created successfully!');
       navigate('/dashboard');
     } catch (error) {
-      const data = error.response?.data;
+      console.error('Registration error:', error);
+      const data = error?.response?.data;
       // Map backend field-level validation errors to the form
       if (data?.errors && Array.isArray(data.errors)) {
         const fieldErrors = {};
@@ -89,7 +90,8 @@ function RegisterPage() {
         }
         toast.error(data.message || 'Validation failed. Please check your input.');
       } else {
-        toast.error(data?.message || 'Registration failed. Please try again.');
+        const msg = data?.message || error?.message || 'Registration failed. Please try again.';
+        toast.error(msg);
       }
     } finally {
       setIsSubmitting(false);

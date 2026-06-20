@@ -78,8 +78,8 @@ api.interceptors.response.use(
       }
     }
 
-    const errorMessage = error.response?.data?.message || 'An unexpected error occurred.';
-    return Promise.reject({ ...error, message: errorMessage });
+    // Don't wrap - preserve original error structure for proper handling
+    return Promise.reject(error);
   }
 );
 
