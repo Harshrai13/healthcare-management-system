@@ -57,6 +57,16 @@ async function startServer() {
         const { seedDatabase } = require('./seeds/seedData');
         await seedDatabase();
         logger.info('Database seeded successfully');
+      } else {
+        // Even if users exist, ensure services are seeded
+        const { Service } = require('./models');
+        const serviceCount = await Service.countDocuments();
+        if (serviceCount === 0) {
+          logger.info('No services found — seeding services...');
+          const { seedDatabase } = require('./seeds/seedData');
+          await seedDatabase();
+          logger.info('Services seeded successfully');
+        }
       }
     } catch (seedErr) {
       logger.warn('Auto-seed skipped:', seedErr.message);
