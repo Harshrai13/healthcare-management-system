@@ -19,9 +19,9 @@ console.log('\n=== Installing server dependencies ===');
 run('npm install', path.join(ROOT, 'server'));
 
 console.log('\n=== Installing client dependencies ===');
-run('npm install', path.join(ROOT, 'client'));
+run('npm install --include=dev', path.join(ROOT, 'client'));
 
 console.log('\n=== Building client ===');
-run('npx vite build', path.join(ROOT, 'client'));
+run('npx --yes vite build', path.join(ROOT, 'client'));
 
 console.log('\n=== Build complete! ===');
