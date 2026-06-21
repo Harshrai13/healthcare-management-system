@@ -56,8 +56,31 @@ function Navbar() {
         <div className="flex items-center justify-between">
           
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 group" aria-label="VerdantCare Home">
-            <img src="/logo.png" alt="VerdantCare Logo" className="h-16 md:h-20 w-auto object-contain transition-transform group-hover:scale-105" />
+          <Link to="/" className="flex items-center gap-2 group" aria-label="VerdantCare Home">
+            <svg className="h-10 md:h-12 w-auto transition-transform group-hover:scale-105" viewBox="0 0 280 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+              {/* Shield icon */}
+              <g transform="translate(0, 4)">
+                <path d="M24 2L44 12V28C44 38 34 46 24 50C14 46 4 38 4 28V12L24 2Z" fill="#1B5E3B"/>
+                <path d="M24 2L44 12V28C44 38 34 46 24 50V2L24 2Z" fill="#2E7D4F"/>
+                <path d="M24 2L4 12V28C4 38 14 46 24 50V2Z" fill="#4CAF50" opacity="0.7"/>
+                {/* Cross */}
+                <rect x="18" y="16" width="12" height="4" rx="1" fill="white"/>
+                <rect x="22" y="12" width="4" height="12" rx="1" fill="white"/>
+                {/* Leaf */}
+                <path d="M28 20C28 20 34 16 38 20C42 24 36 30 36 30C36 30 30 26 28 20Z" fill="#A5D6A7"/>
+                <path d="M28 20C30 24 32 26 36 30" stroke="white" strokeWidth="1" fill="none"/>
+                {/* Stethoscope arc */}
+                <path d="M8 36C8 36 14 44 24 44C34 44 40 36 40 36" stroke="white" strokeWidth="2" fill="none" strokeLinecap="round"/>
+                <circle cx="40" cy="36" r="3" fill="white"/>
+                {/* Heartbeat line */}
+                <polyline points="10,28 16,28 19,22 23,34 27,24 30,28 38,28" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+              </g>
+              {/* Text */}
+              <text x="54" y="34" font-family="Georgia, serif" font-size="22" font-weight="bold" fill="#1B5E3B">VerdantCare</text>
+              <line x1="54" y1="42" x2="70" y2="42" stroke="#1B5E3B" strokeWidth="1"/>
+              <text x="74" y="45" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#1B5E3B" letter-spacing="2">MEDICAL CENTER</text>
+              <line x1="175" y1="42" x2="195" y2="42" stroke="#1B5E3B" strokeWidth="1"/>
+            </svg>
           </Link>
 
           {/* Desktop Nav */}
