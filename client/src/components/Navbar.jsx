@@ -57,7 +57,7 @@ function Navbar() {
           
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 group" aria-label="VerdantCare Home">
-            <img src="/logo.png" alt="VerdantCare Logo" className="h-14 w-auto min-w-[280px] max-w-[320px] object-contain transition-transform group-hover:scale-105" />
+            <img src="/logo.png" alt="VerdantCare Logo" className="h-16 md:h-20 w-auto object-contain transition-transform group-hover:scale-105" />
           </Link>
 
           {/* Desktop Nav */}
