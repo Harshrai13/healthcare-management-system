@@ -57,8 +57,10 @@ async function createPrescription(req, res, next) {
       { path: 'doctorId', populate: { path: 'userId', select: 'firstName lastName' } },
     ]);
 
-    // Fire-and-forget prescription notification + email
-    notifyPrescriptionIssued(prescription).catch((err) => logger.error('Notification error', { err: err.message }));
+    // Truly fire-and-forget: defer to next tick
+    setImmediate(() => {
+      notifyPrescriptionIssued(prescription).catch((err) => logger.error('Notification error', { err: err.message }));
+    });
 
     res.status(201).json({ success: true, message: 'Prescription created.', data: prescription });
   } catch (error) {

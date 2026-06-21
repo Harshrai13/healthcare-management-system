@@ -80,7 +80,9 @@ async function createInvoice(req, res, next) {
     const { patientId, appointmentId, items, subtotal, tax, total, dueDate } = req.body;
     const invoice = await Invoice.create({ patientId, appointmentId, items, subtotal, tax, total, dueDate: new Date(dueDate), status: 'PENDING' });
     await invoice.populate({ path: 'patientId', select: 'firstName lastName email' });
-    notifyBillingReminder(invoice).catch((err) => logger.error('Notification error', { err: err.message }));
+    setImmediate(() => {
+      notifyBillingReminder(invoice).catch((err) => logger.error('Notification error', { err: err.message }));
+    });
     res.status(201).json({ success: true, message: 'Invoice created.', data: invoice });
   } catch (error) {
     next(error);

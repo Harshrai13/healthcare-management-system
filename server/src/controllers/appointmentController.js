@@ -53,8 +53,10 @@ async function createAppointment(req, res, next) {
     }
 
     logger.info('Appointment created', { appointmentId: appointment._id, patientId, doctorId, date, startTime });
-    // Fire-and-forget confirmation notification + email
-    notifyAppointmentConfirmed(appointment).catch((err) => logger.error('Notification error', { err: err.message }));
+    // Truly fire-and-forget: defer to next tick so response is sent immediately
+    setImmediate(() => {
+      notifyAppointmentConfirmed(appointment).catch((err) => logger.error('Notification error', { err: err.message }));
+    });
     res.status(201).json({ success: true, message: 'Appointment booked successfully.', data: responseData });
   } catch (error) { next(error); }
 }
@@ -104,20 +106,22 @@ async function updateAppointment(req, res, next) {
     logger.info('Appointment updated', { appointmentId: appointment._id, status });
     // Fire-and-forget: if status changed to CONFIRMED, send confirmation
     if (status === 'CONFIRMED') {
-      notifyAppointmentConfirmed(appointment).catch((err) => logger.error('Notification error', { err: err.message }));
-      // Send telehealth reminder for VIDEO appointments
-      if (appointment.consultationType === 'VIDEO') {
-        notifyTelehealthReminder(appointment).catch((err) => logger.error('Telehealth reminder error', { err: err.message }));
-      }
+      setImmediate(() => {
+        notifyAppointmentConfirmed(appointment).catch((err) => logger.error('Notification error', { err: err.message }));
+        if (appointment.consultationType === 'VIDEO') {
+          notifyTelehealthReminder(appointment).catch((err) => logger.error('Telehealth reminder error', { err: err.message }));
+        }
+      });
     }
-    // Fire-and-forget: if status changed to COMPLETED, send review request
     if (status === 'COMPLETED') {
-      createNotification({
-        userId: appointment.patientId._id,
-        type: 'REVIEW_REQUEST',
-        title: 'How was your visit?',
-        message: `Your appointment with Dr. ${appointment.doctorId.userId?.lastName || 'Doctor'} is complete. We'd love to hear your feedback.`,
-      }).catch((err) => logger.error('Notification error', { err: err.message }));
+      setImmediate(() => {
+        createNotification({
+          userId: appointment.patientId._id,
+          type: 'REVIEW_REQUEST',
+          title: 'How was your visit?',
+          message: `Your appointment with Dr. ${appointment.doctorId.userId?.lastName || 'Doctor'} is complete. We'd love to hear your feedback.`,
+        }).catch((err) => logger.error('Notification error', { err: err.message }));
+      });
     }
     res.json({ success: true, message: 'Appointment updated successfully.', data: appointment });
   } catch (error) { next(error); }
@@ -134,8 +138,10 @@ async function cancelAppointment(req, res, next) {
     if (['CANCELLED', 'COMPLETED', 'NO_SHOW'].includes(appointment.status)) throw new AppError('Cannot cancel this appointment.', 400, ErrorCodes.VALIDATION_ERROR);
     const updated = await Appointment.findByIdAndUpdate(req.params.id, { status: 'CANCELLED', cancellationReason: reason }, { new: true });
     logger.info('Appointment cancelled', { appointmentId: appointment._id, reason });
-    // Fire-and-forget cancellation notification + email
-    notifyAppointmentCancelled(appointment, reason).catch((err) => logger.error('Notification error', { err: err.message }));
+    // Truly fire-and-forget: defer to next tick
+    setImmediate(() => {
+      notifyAppointmentCancelled(appointment, reason).catch((err) => logger.error('Notification error', { err: err.message }));
+    });
     res.json({ success: true, message: 'Appointment cancelled successfully.', data: updated });
   } catch (error) { next(error); }
 }
@@ -152,8 +158,10 @@ async function rescheduleAppointment(req, res, next) {
       .populate({ path: 'patientId', select: 'firstName lastName email' })
       .populate({ path: 'serviceId', select: 'name' });
     logger.info('Appointment rescheduled', { appointmentId: req.params.id, newDate: date, newTime: startTime });
-    // Fire-and-forget reschedule notification + email
-    notifyAppointmentRescheduled(appointment).catch((err) => logger.error('Notification error', { err: err.message }));
+    // Truly fire-and-forget: defer to next tick
+    setImmediate(() => {
+      notifyAppointmentRescheduled(appointment).catch((err) => logger.error('Notification error', { err: err.message }));
+    });
     res.json({ success: true, message: 'Appointment rescheduled successfully.', data: appointment });
   } catch (error) { next(error); }
 }

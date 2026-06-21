@@ -62,8 +62,10 @@ async function createRecord(req, res, next) {
       { path: 'doctorId', populate: { path: 'userId', select: 'firstName lastName' } },
     ]);
 
-    // Fire-and-forget medical record notification
-    notifyMedicalRecordCreated(record).catch((err) => logger.error('Notification error', { err: err.message }));
+    // Truly fire-and-forget: defer to next tick
+    setImmediate(() => {
+      notifyMedicalRecordCreated(record).catch((err) => logger.error('Notification error', { err: err.message }));
+    });
 
     res.status(201).json({ success: true, message: 'Medical record created.', data: record });
   } catch (error) {
