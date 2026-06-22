@@ -15,6 +15,42 @@ async function getSettings(req, res, next) {
   }
 }
 
+async function getPublicSettings(req, res, next) {
+  try {
+    let settings = await Settings.findOne();
+    if (!settings) {
+      settings = await Settings.create({});
+    }
+    // Only return public-facing fields
+    const publicData = {
+      clinicName: settings.clinicName,
+      tagline: settings.tagline,
+      supportEmail: settings.supportEmail,
+      infoEmail: settings.infoEmail,
+      appointmentsEmail: settings.appointmentsEmail,
+      phone: settings.phone,
+      emergencyPhone: settings.emergencyPhone,
+      address: settings.address,
+      weekdayHours: settings.weekdayHours,
+      saturdayHours: settings.saturdayHours,
+      sundayHours: settings.sundayHours,
+      footerAddress: settings.footerAddress,
+      footerPhone: settings.footerPhone,
+      footerEmail: settings.footerEmail,
+      footerWeekdayHours: settings.footerWeekdayHours,
+      footerWeekendHours: settings.footerWeekendHours,
+      facebookUrl: settings.facebookUrl,
+      twitterUrl: settings.twitterUrl,
+      instagramUrl: settings.instagramUrl,
+      linkedinUrl: settings.linkedinUrl,
+      logoUrl: settings.logoUrl,
+    };
+    res.json({ success: true, data: publicData });
+  } catch (error) {
+    next(error);
+  }
+}
+
 async function updateSettings(req, res, next) {
   try {
     let settings = await Settings.findOne();
@@ -23,8 +59,12 @@ async function updateSettings(req, res, next) {
     }
 
     const allowedFields = [
-      'clinicName', 'supportEmail', 'phone', 'address', 'timezone',
-      'currency', 'language', 'twoFactorEnabled', 'sessionTimeout',
+      'clinicName', 'tagline', 'supportEmail', 'infoEmail', 'appointmentsEmail',
+      'phone', 'emergencyPhone', 'address',
+      'weekdayHours', 'saturdayHours', 'sundayHours',
+      'footerAddress', 'footerPhone', 'footerEmail', 'footerWeekdayHours', 'footerWeekendHours',
+      'facebookUrl', 'twitterUrl', 'instagramUrl', 'linkedinUrl',
+      'timezone', 'currency', 'language', 'twoFactorEnabled', 'sessionTimeout',
       'ipWhitelist', 'notificationPrefs', 'paymentGateway',
       'invoiceDuePeriod', 'logoUrl',
     ];
@@ -66,4 +106,4 @@ async function uploadLogo(req, res, next) {
   } catch (error) { next(error); }
 }
 
-module.exports = { getSettings, updateSettings, uploadLogo };
+module.exports = { getSettings, getPublicSettings, updateSettings, uploadLogo };

@@ -80,6 +80,17 @@ async function startServer() {
         environment: process.env.NODE_ENV || 'development',
         port: PORT,
       });
+
+      // Keep-alive ping to prevent Render free tier cold starts
+      // Render spins down after 15 min inactivity; ping every 14 min
+      if (process.env.NODE_ENV === 'production' && process.env.RENDER_EXTERNAL_URL) {
+        const KEEP_ALIVE_INTERVAL = 14 * 60 * 1000; // 14 minutes
+        const healthUrl = `${process.env.RENDER_EXTERNAL_URL}/health`;
+        logger.info('Keep-alive ping enabled', { interval: '14min', url: healthUrl });
+        setInterval(() => {
+          fetch(healthUrl).catch(() => {});
+        }, KEEP_ALIVE_INTERVAL);
+      }
     });
 
     const gracefulShutdown = async (signal) => {

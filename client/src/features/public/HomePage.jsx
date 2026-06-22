@@ -1,8 +1,7 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { Calendar, UserCheck, Video, Award, Users, Stethoscope, Heart, Shield, CheckCircle, Star, Clock, ArrowRight, Quote, PenLine, LogIn } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Calendar, UserCheck, Video, Award, Users, Stethoscope, Heart, Shield, CheckCircle, Star, Clock, ArrowRight, Quote, PenLine } from 'lucide-react';
 import { memo, useState, useEffect } from 'react';
 import { publicAPI, reviewsAPI } from '../../api/generalAPI';
-import { useAuth } from '../../hooks/useAuth';
 import toast from 'react-hot-toast';
 
 // ─── HERO (original with logo) ────────────────────────────────────────────────
@@ -50,13 +49,11 @@ const HeroSection = memo(function HeroSection() {
 
 // ─── STATS + REVIEW SECTION ────────────────────────────────────────────────
 function StatsAndReviewSection() {
-  const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth();
-
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // review form state
+  const [patientName, setPatientName] = useState('');
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState('');
@@ -82,11 +79,6 @@ function StatsAndReviewSection() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!isAuthenticated) {
-      toast.error('Please log in to write a review.');
-      navigate('/login');
-      return;
-    }
     if (rating === 0) {
       toast.error('Please select a star rating.');
       return;
@@ -97,10 +89,11 @@ function StatsAndReviewSection() {
     }
     setSubmitting(true);
     try {
-      const res = await reviewsAPI.create({ rating, comment: comment.trim() });
+      const res = await reviewsAPI.create({ rating, comment: comment.trim(), patientName: patientName.trim() || undefined });
       setSubmittedReview(res.data.data);
       setRating(0);
       setComment('');
+      setPatientName('');
       toast.success('Review submitted for moderation!');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to submit review.');
@@ -153,12 +146,19 @@ function StatsAndReviewSection() {
                   <p className="text-neutral-600 text-sm italic">"{submittedReview.comment}"</p>
                 </div>
               </div>
-            ) : isAuthenticated ? (
+            ) : (
               <form onSubmit={handleSubmit}>
                 <div className="flex items-center gap-2 mb-4">
                   <PenLine size={18} className="text-primary-600" />
-                  <h3 className="text-lg font-heading font-bold text-neutral-900">Write a Review</h3>
+                  <h3 className="text-lg font-heading font-bold text-neutral-900">Share Your Experience</h3>
                 </div>
+                <input
+                  type="text"
+                  value={patientName}
+                  onChange={e => setPatientName(e.target.value)}
+                  placeholder="Your name (optional)"
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3 text-sm text-neutral-800 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-300 transition mb-3"
+                />
                 <div className="flex gap-1 mb-4">
                   {[1, 2, 3, 4, 5].map(n => (
                     <button
@@ -191,17 +191,6 @@ function StatsAndReviewSection() {
                   {submitting ? 'Submitting…' : 'Submit Review'}
                 </button>
               </form>
-            ) : (
-              <div className="text-center py-4 flex flex-col items-center justify-center h-full">
-                <div className="w-14 h-14 rounded-full bg-primary-50 flex items-center justify-center mb-4">
-                  <PenLine size={24} className="text-primary-600" />
-                </div>
-                <h3 className="text-lg font-heading font-bold text-neutral-900 mb-2">Share Your Experience</h3>
-                <p className="text-neutral-500 text-sm mb-5">Log in to write a review and help others discover great care.</p>
-                <Link to="/login" className="btn-primary btn-lg inline-flex items-center gap-2">
-                  <LogIn size={16} /> Log In to Write a Review
-                </Link>
-              </div>
             )}
           </div>
         </div>
@@ -232,9 +221,11 @@ function StatsAndReviewSection() {
           ) : (
             <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin">
               {featured.map(review => {
-                const patientName = `${review.patient?.firstName || 'Patient'} ${review.patient?.lastName || ''}`.trim();
+                const patientName = review.patientName || `${review.patient?.firstName || 'Patient'} ${review.patient?.lastName || ''}`.trim() || 'Anonymous';
                 const doctorName = review.doctor?.user ? `Dr. ${review.doctor.user.firstName} ${review.doctor.user.lastName}` : 'Our Team';
-                const initials = `${(review.patient?.firstName || 'P')[0]}${(review.patient?.lastName || 'A')[0]}`.toUpperCase();
+                const firstInitial = patientName.charAt(0).toUpperCase();
+                const secondInitial = patientName.split(/\s+/)[1]?.charAt(0)?.toUpperCase() || '';
+                const initials = `${firstInitial}${secondInitial}`.toUpperCase();
                 const date = review.createdAt ? new Date(review.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
                 return (
                   <div key={review.id} className="min-w-[300px] bg-white/10 backdrop-blur-sm border border-white/15 rounded-2xl p-5 shrink-0">
@@ -386,10 +377,12 @@ function TestimonialsSection() {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {reviews.map(review => {
-              const patientName = `${review.patient?.firstName || 'Patient'} ${review.patient?.lastName || ''}`.trim();
+              const patientName = review.patientName || `${review.patient?.firstName || 'Patient'} ${review.patient?.lastName || ''}`.trim() || 'Anonymous';
               const doctorName  = review.doctor?.user ? `Dr. ${review.doctor.user.firstName} ${review.doctor.user.lastName}` : 'Our Team';
               const specialty   = review.doctor?.specialty || 'Healthcare';
-              const initials    = `${(review.patient?.firstName || 'P')[0]}${(review.patient?.lastName || 'A')[0]}`.toUpperCase();
+              const firstInitial = patientName.charAt(0).toUpperCase();
+              const secondInitial = patientName.split(/\s+/)[1]?.charAt(0)?.toUpperCase() || '';
+              const initials    = `${firstInitial}${secondInitial}`.toUpperCase();
 
               return (
                 <div key={review.id} className="group relative rounded-3xl p-7 transition-all duration-300 hover:-translate-y-1" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(12px)' }}>

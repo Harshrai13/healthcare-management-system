@@ -25,6 +25,20 @@ const authLimiter = rateLimit({
   skipSuccessfulRequests: true,
 });
 
+// More lenient limiter for public forms (contact, careers)
+const publicFormLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: {
+    success: false,
+    message: 'Too many submissions. Please wait a moment and try again.',
+    code: 'RATE_LIMIT_EXCEEDED',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+});
+
 const apiLimiter = rateLimit({
   windowMs: 1 * 60 * 1000,
   max: 30,
@@ -37,4 +51,4 @@ const apiLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-module.exports = { generalLimiter, authLimiter, apiLimiter };
+module.exports = { generalLimiter, authLimiter, publicFormLimiter, apiLimiter };

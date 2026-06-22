@@ -1,9 +1,26 @@
-import { memo } from 'react';
+import { memo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Phone, Mail, Clock, Facebook, Twitter, Instagram, Linkedin, ArrowRight } from 'lucide-react';
+import { settingsAPI } from '../api/generalAPI';
 
 function Footer() {
   const currentYear = new Date().getFullYear();
+  const [settings, setSettings] = useState(null);
+
+  useEffect(() => {
+    settingsAPI.getPublic()
+      .then(res => setSettings(res.data.data))
+      .catch(() => {});
+  }, []);
+
+  const s = settings || {};
+
+  const socialLinks = [
+    { icon: Twitter, url: s.twitterUrl, label: 'Twitter' },
+    { icon: Linkedin, url: s.linkedinUrl, label: 'LinkedIn' },
+    { icon: Facebook, url: s.facebookUrl, label: 'Facebook' },
+    { icon: Instagram, url: s.instagramUrl, label: 'Instagram' },
+  ].filter(sl => sl.url);
 
   return (
     <footer className="bg-forest-gradient text-white relative overflow-hidden pt-20">
@@ -16,16 +33,20 @@ function Footer() {
           {/* Brand Column */}
           <div className="lg:col-span-4">
             <Link to="/" className="flex items-center gap-3 mb-6 inline-flex group">
-              <div className="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/20 transition-transform group-hover:scale-105">
-                <span className="text-primary-300 font-display font-bold text-2xl">V</span>
-              </div>
+              {s.logoUrl ? (
+                <img src={s.logoUrl} alt="Logo" className="w-12 h-12 rounded-full object-cover border border-white/20" />
+              ) : (
+                <div className="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/20 transition-transform group-hover:scale-105">
+                  <span className="text-primary-300 font-display font-bold text-2xl">V</span>
+                </div>
+              )}
               <div>
-                <h2 className="text-2xl font-display font-black tracking-tight text-white">VerdantCare</h2>
+                <h2 className="text-2xl font-display font-black tracking-tight text-white">{s.clinicName || 'VerdantCare'}</h2>
                 <p className="text-[10px] font-bold text-primary-400 tracking-widest uppercase mt-0.5">MEDICAL CENTER</p>
               </div>
             </Link>
             <p className="text-primary-100/80 text-sm leading-relaxed mb-8 pr-4">
-              Premium healthcare services combining expert medical care with compassionate patient experience. Your health journey, elevated.
+              {s.tagline || 'Premium healthcare services combining expert medical care with compassionate patient experience. Your health journey, elevated.'}
             </p>
             
             {/* Newsletter */}
@@ -96,22 +117,22 @@ function Footer() {
                 <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0 text-primary-400">
                   <MapPin size={16} />
                 </div>
-                <span className="text-primary-100/80 leading-relaxed mt-1">123 Premium Care Blvd,<br />Suite 400, NY 10001</span>
+                <span className="text-primary-100/80 leading-relaxed mt-1 whitespace-pre-line">{s.footerAddress || '123 Healthcare Ave, Suite 100\nSouth Carolina, SC 29601'}</span>
               </li>
               <li className="flex items-center gap-4">
                 <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0 text-primary-400">
                   <Phone size={16} />
                 </div>
-                <a href="tel:+1234567890" className="text-primary-100/80 hover:text-white transition-colors font-medium">
-                  +1 (800) 123-4567
+                <a href={`tel:${s.footerPhone?.replace(/\s/g, '')}`} className="text-primary-100/80 hover:text-white transition-colors font-medium">
+                  {s.footerPhone || '+1 (800) 123-4567'}
                 </a>
               </li>
               <li className="flex items-center gap-4">
                 <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0 text-primary-400">
                   <Mail size={16} />
                 </div>
-                <a href="mailto:hello@verdantcare.com" className="text-primary-100/80 hover:text-white transition-colors">
-                  hello@verdantcare.com
+                <a href={`mailto:${s.footerEmail}`} className="text-primary-100/80 hover:text-white transition-colors">
+                  {s.footerEmail || 'info@verdantcare.com'}
                 </a>
               </li>
               <li className="flex items-start gap-4">
@@ -119,8 +140,8 @@ function Footer() {
                   <Clock size={16} />
                 </div>
                 <div className="text-primary-100/80 mt-1">
-                  <p>Mon-Fri: 8am - 8pm</p>
-                  <p>Sat-Sun: 9am - 5pm</p>
+                  <p>{s.footerWeekdayHours || 'Mon-Fri: 9am - 6pm'}</p>
+                  <p>{s.footerWeekendHours || 'Sat: 9am - 2pm'}</p>
                 </div>
               </li>
             </ul>
@@ -134,23 +155,18 @@ function Footer() {
         <div className="container-custom py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-primary-100/60 text-sm">
-              &copy; {currentYear} VerdantCare Medical Center. All rights reserved.
+              &copy; {currentYear} {s.clinicName || 'VerdantCare Medical Center'}. All rights reserved.
             </p>
             
-            <div className="flex items-center gap-4">
-              <a href="#" className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center text-white/70 hover:bg-primary-500 hover:text-white transition-all">
-                <Twitter size={16} />
-              </a>
-              <a href="#" className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center text-white/70 hover:bg-primary-500 hover:text-white transition-all">
-                <Linkedin size={16} />
-              </a>
-              <a href="#" className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center text-white/70 hover:bg-primary-500 hover:text-white transition-all">
-                <Facebook size={16} />
-              </a>
-              <a href="#" className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center text-white/70 hover:bg-primary-500 hover:text-white transition-all">
-                <Instagram size={16} />
-              </a>
-            </div>
+            {socialLinks.length > 0 && (
+              <div className="flex items-center gap-4">
+                {socialLinks.map(({ icon: Icon, url, label }) => (
+                  <a key={label} href={url} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center text-white/70 hover:bg-primary-500 hover:text-white transition-all">
+                    <Icon size={16} />
+                  </a>
+                ))}
+              </div>
+            )}
 
             <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm">
               <Link to="/privacy-policy" className="text-primary-100/60 hover:text-white transition-colors">Privacy</Link>

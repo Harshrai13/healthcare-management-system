@@ -1,11 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MapPin, Phone, Mail, Clock, Send } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { publicAPI } from '../../api/generalAPI';
+import { publicAPI, settingsAPI } from '../../api/generalAPI';
 
 function ContactPage() {
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', subject: '', message: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [settings, setSettings] = useState(null);
+
+  useEffect(() => {
+    settingsAPI.getPublic()
+      .then(res => setSettings(res.data.data))
+      .catch(() => {});
+  }, []);
+
+  const s = settings || {};
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -24,6 +33,22 @@ function ContactPage() {
       setIsSubmitting(false);
     }
   };
+
+  const contactInfo = [
+    { icon: MapPin, title: 'Address', content: s.address || '123 Healthcare Ave, Suite 100, South Carolina, SC 29601' },
+    {
+      icon: Phone, title: 'Phone',
+      content: `${s.phone || '+1 (800) 123-4567'}${s.emergencyPhone ? `\nEmergency: ${s.emergencyPhone}` : ''}`
+    },
+    {
+      icon: Mail, title: 'Email',
+      content: `${s.infoEmail || 'info@verdantcare.com'}${s.appointmentsEmail ? `\n${s.appointmentsEmail}` : ''}`
+    },
+    {
+      icon: Clock, title: 'Hours',
+      content: `${s.weekdayHours || 'Mon-Fri: 9:00 AM - 6:00 PM'}\n${s.saturdayHours || 'Sat: 9:00 AM - 2:00 PM'}\n${s.sundayHours || 'Sun: Closed'}`
+    },
+  ];
 
   return (
     <section className="section-padding">
@@ -74,12 +99,7 @@ function ContactPage() {
           <div>
             <h2 className="text-2xl font-heading font-bold text-neutral-900 mb-6">Contact Information</h2>
             <div className="space-y-6">
-              {[
-                { icon: MapPin, title: 'Address', content: '123 Healthcare Ave, Suite 100\nSouth Carolina, SC 29601' },
-                { icon: Phone, title: 'Phone', content: '+1 (234) 567-8900\nEmergency: +1 (234) 567-9111' },
-                { icon: Mail, title: 'Email', content: 'info@verdantcare.com\nappointments@verdantcare.com' },
-                { icon: Clock, title: 'Hours', content: 'Mon-Fri: 9:00 AM - 6:00 PM\nSat: 9:00 AM - 2:00 PM\nSun: Closed' },
-              ].map(({ icon: Icon, title, content }) => (
+              {contactInfo.map(({ icon: Icon, title, content }) => (
                 <div key={title} className="flex gap-4">
                   <div className="w-12 h-12 bg-primary-50 rounded-xl flex items-center justify-center shrink-0">
                     <Icon className="text-primary-700" size={22} />

@@ -55,12 +55,14 @@ function ReviewsPage() {
   const successRate = stats.successRate || 0;
 
   const formatReview = (review) => {
-    const patientName = `${review.patientId?.firstName || 'Patient'} ${review.patientId?.lastName || ''}`.trim();
+    const patientName = review.patientName || `${review.patientId?.firstName || 'Patient'} ${review.patientId?.lastName || ''}`.trim() || 'Anonymous';
     const doctorName = review.doctorId?.user
       ? `Dr. ${review.doctorId.user.firstName} ${review.doctorId.user.lastName}`
       : 'VerdantCare Team';
     const specialty = review.doctorId?.specialty || '';
-    const initials = `${(review.patientId?.firstName || 'P')[0]}${(review.patientId?.lastName || 'A')[0]}`.toUpperCase();
+    const firstInitial = patientName.charAt(0).toUpperCase();
+    const secondInitial = patientName.split(/\s+/)[1]?.charAt(0)?.toUpperCase() || '';
+    const initials = `${firstInitial}${secondInitial}`.toUpperCase();
     const date = review.createdAt
       ? new Date(review.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
       : '';

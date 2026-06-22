@@ -73,6 +73,7 @@ export const insuranceAPI = {
 
 export const settingsAPI = {
   get: () => api.get('/settings'),
+  getPublic: () => api.get('/settings/public'),
   update: (data) => api.put('/settings', data),
   uploadLogo: (formData) => api.post('/settings/logo', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
 };

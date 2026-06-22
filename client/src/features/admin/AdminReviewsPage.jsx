@@ -101,7 +101,7 @@ export default function AdminReviewsPage() {
 
   // ── client-side filter & search ──────────────────────────────────────────
   const filtered = reviews.filter(r => {
-    const name    = `${r.patientId?.firstName || ''} ${r.patientId?.lastName || ''}`.toLowerCase();
+    const name    = (r.patientName || `${r.patientId?.firstName || ''} ${r.patientId?.lastName || ''}`).toLowerCase();
     const doctor  = `${r.doctorId?.userId?.firstName || ''} ${r.doctorId?.userId?.lastName || ''}`.toLowerCase();
     const comment = (r.comment || '').toLowerCase();
     const term    = search.toLowerCase();
@@ -190,12 +190,14 @@ export default function AdminReviewsPage() {
         ) : (
           <div className="divide-y divide-neutral-50">
             {filtered.map(review => {
-              const patientName = `${review.patientId?.firstName || 'Patient'} ${review.patientId?.lastName || ''}`.trim();
+              const patientName = review.patientName || `${review.patientId?.firstName || 'Patient'} ${review.patientId?.lastName || ''}`.trim() || 'Anonymous';
               const doctorName  = review.doctorId?.userId
                 ? `Dr. ${review.doctorId.userId.firstName} ${review.doctorId.userId.lastName}`
                 : 'Our Team';
               const specialty   = review.doctorId?.specialty || '';
-              const initials    = `${(review.patientId?.firstName || 'P')[0]}${(review.patientId?.lastName || 'A')[0]}`.toUpperCase();
+              const firstInitial = patientName.charAt(0).toUpperCase();
+              const secondInitial = patientName.split(/\s+/)[1]?.charAt(0)?.toUpperCase() || '';
+              const initials    = `${firstInitial}${secondInitial}`.toUpperCase();
               const date        = new Date(review.createdAt).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
               const isApproving = actionLoading === review._id + '-approve';
               const isDeleting  = actionLoading === review._id + '-delete';

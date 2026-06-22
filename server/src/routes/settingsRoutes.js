@@ -4,6 +4,9 @@ const { authenticate, authorize } = require('../middleware/auth');
 const { upload } = require('../middleware/upload');
 const settingsController = require('../controllers/settingsController');
 
+// Public settings (no auth) — for footer, contact page, etc.
+router.get('/public', settingsController.getPublicSettings);
+
 // GET /settings - accessible to authenticated users (for loading settings)
 router.get('/', authenticate, settingsController.getSettings);
 
