@@ -1,6 +1,6 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Star, MoreVertical, CheckCircle, XCircle, Clock, Upload, X, Eye, Copy } from 'lucide-react';
+import { Plus, Search, Star, MoreVertical, CheckCircle, XCircle, Clock, Upload, X, Eye, Copy, Key } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { doctorsAPI, servicesAPI } from '../../api/doctorsAPI';
 import { adminAPI } from '../../api/generalAPI';
@@ -13,6 +13,7 @@ export default function AdminDoctorsPage() {
   const [photoPreview, setPhotoPreview] = useState(null);
   const [openMenuId, setOpenMenuId] = useState(null);
   const [credentials, setCredentials] = useState(null);
+  const [viewCredDoctor, setViewCredDoctor] = useState(null);
   const fileInputRef = useRef(null);
   const queryClient = useQueryClient();
 
@@ -41,6 +42,15 @@ export default function AdminDoctorsPage() {
       const { data } = await servicesAPI.getAll();
       return data.data || [];
     },
+  });
+
+  const { data: credData, isLoading: credLoading } = useQuery({
+    queryKey: ['doctorCredentials', viewCredDoctor],
+    queryFn: async () => {
+      const { data } = await adminAPI.getDoctorCredentials(viewCredDoctor);
+      return data.data;
+    },
+    enabled: !!viewCredDoctor,
   });
 
   const stats = useMemo(() => {
@@ -151,7 +161,7 @@ export default function AdminDoctorsPage() {
                       <MoreVertical size={20} />
                     </button>
                     {openMenuId === (doc._id || doc.id) && (
-                      <div className="absolute right-0 top-8 w-40 bg-white rounded-xl shadow-lg border border-neutral-100 py-1 z-30">
+                      <div className="absolute right-0 top-8 w-44 bg-white rounded-xl shadow-lg border border-neutral-100 py-1 z-30">
                         <a
                           href={`/doctors/${doc._id || doc.id}`}
                           target="_blank"
@@ -161,6 +171,12 @@ export default function AdminDoctorsPage() {
                         >
                           <Eye size={16} /> View Profile
                         </a>
+                        <button
+                          className="flex items-center gap-2 px-4 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors w-full text-left"
+                          onClick={(e) => { e.stopPropagation(); setOpenMenuId(null); setViewCredDoctor(doc._id || doc.id); }}
+                        >
+                          <Key size={16} /> View Credentials
+                        </button>
                       </div>
                     )}
                   </div>
@@ -294,7 +310,7 @@ export default function AdminDoctorsPage() {
         </div>
       )}
 
-      {/* Credentials Modal */}
+      {/* Credentials Modal (after create) */}
       {credentials && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setCredentials(null)}>
           <div className="bg-white rounded-2xl shadow-xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
@@ -331,6 +347,59 @@ export default function AdminDoctorsPage() {
             </div>
             <div className="p-6 border-t border-neutral-100">
               <button onClick={() => setCredentials(null)} className="btn-primary w-full justify-center">Done</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Credentials Modal (from doctor card) */}
+      {viewCredDoctor && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setViewCredDoctor(null)}>
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6 border-b border-neutral-100 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-neutral-900 flex items-center gap-2"><Key size={20} className="text-primary-600" /> Doctor Credentials</h3>
+              <button onClick={() => setViewCredDoctor(null)} className="p-1.5 text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 rounded-lg">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              {credLoading ? (
+                <div className="flex justify-center py-4"><LoadingSpinner /></div>
+              ) : credData ? (
+                <>
+                  <p className="text-sm text-neutral-600">Login credentials for <strong>{credData.name}</strong>.</p>
+                  <div className="bg-neutral-50 rounded-xl p-4 space-y-3">
+                    <div>
+                      <p className="text-xs text-neutral-400 font-medium uppercase mb-1">Email (Login ID)</p>
+                      <p className="text-sm font-semibold text-neutral-900">{credData.email}</p>
+                    </div>
+                    {credData.password ? (
+                      <div>
+                        <p className="text-xs text-neutral-400 font-medium uppercase mb-1">Password</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-mono font-semibold text-neutral-900 bg-white px-3 py-1.5 rounded-lg border border-neutral-200 flex-1">{credData.password}</p>
+                          <button
+                            onClick={() => { navigator.clipboard.writeText(credData.password); toast.success('Password copied'); }}
+                            className="p-2 text-neutral-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                            title="Copy password"
+                          >
+                            <Copy size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                        <p className="text-xs text-amber-700">Password was set before credentials tracking was added. The doctor can reset their password from their profile.</p>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-red-500 text-center py-4">Failed to load credentials.</p>
+              )}
+            </div>
+            <div className="p-6 border-t border-neutral-100">
+              <button onClick={() => setViewCredDoctor(null)} className="btn-primary w-full justify-center">Close</button>
             </div>
           </div>
         </div>

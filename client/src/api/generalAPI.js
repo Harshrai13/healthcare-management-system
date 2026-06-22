@@ -51,6 +51,7 @@ export const adminAPI = {
       return api.post('/admin/doctors', data);
     },
   getAuditLogs: (params) => api.get('/admin/audit-logs', { params }),
+  getDoctorCredentials: (id) => api.get(`/admin/doctors/${id}/credentials`),
 };
 
 export const consultationsAPI = {

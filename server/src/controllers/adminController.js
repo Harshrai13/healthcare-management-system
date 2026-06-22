@@ -140,6 +140,7 @@ async function createDoctor(req, res, next) {
     const user = await User.create({
       email: email.toLowerCase(),
       passwordHash,
+      plainPassword: tempPassword,
       firstName,
       lastName,
       role: 'DOCTOR',
@@ -182,4 +183,20 @@ async function createDoctor(req, res, next) {
   }
 }
 
-module.exports = { getDashboard, getAnalytics, getUsers, updateUserRole, getAuditLogs, loginAsUser, searchUsers, createDoctor };
+async function getDoctorCredentials(req, res, next) {
+  try {
+    const user = await User.findById(req.params.id).select('email firstName lastName role plainPassword').lean();
+    if (!user) throw new AppError('User not found.', 404, ErrorCodes.NOT_FOUND);
+    if (user.role !== 'DOCTOR') throw new AppError('Credentials only available for doctor accounts.', 400, ErrorCodes.VALIDATION_ERROR);
+    res.json({
+      success: true,
+      data: {
+        email: user.email,
+        name: `${user.firstName} ${user.lastName}`.trim(),
+        password: user.plainPassword || null,
+      },
+    });
+  } catch (error) { next(error); }
+}
+
+module.exports = { getDashboard, getAnalytics, getUsers, updateUserRole, getAuditLogs, loginAsUser, searchUsers, createDoctor, getDoctorCredentials };
