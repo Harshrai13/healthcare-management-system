@@ -40,4 +40,8 @@ const doctorProfileSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+doctorProfileSchema.index({ specialty: 1, isAvailable: 1 });
+doctorProfileSchema.index({ userId: 1 });
+doctorProfileSchema.index({ isAvailable: 1, rating: -1 });
+
 module.exports = mongoose.model('DoctorProfile', doctorProfileSchema);

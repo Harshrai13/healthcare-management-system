@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
-import { Pill, Clock, RefreshCw, CheckCircle, AlertCircle, FileText, Info } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Pill, Clock, RefreshCw, CheckCircle, AlertCircle, FileText, Info, ArrowLeft } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { prescriptionsAPI } from '../../api/medicalAPI';
 import LoadingSpinner from '../../components/LoadingSpinner';
 
 export default function PrescriptionsPage() {
+  const navigate = useNavigate();
   const { data: prescriptions = [], isLoading } = useQuery({
     queryKey: ['prescriptions'],
     queryFn: async () => {
@@ -32,9 +34,12 @@ export default function PrescriptionsPage() {
 
   return (
     <div className="space-y-6 pb-12">
-      <div>
-        <h1 className="text-2xl font-display font-bold text-neutral-900">My Prescriptions</h1>
-        <p className="text-neutral-500 mt-1">Manage your active medications and request refills.</p>
+      <div className="flex items-center gap-3">
+        <button onClick={() => navigate(-1)} className="p-2 text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 rounded-lg transition-colors"><ArrowLeft size={20} /></button>
+        <div>
+          <h1 className="text-2xl font-display font-bold text-neutral-900">My Prescriptions</h1>
+          <p className="text-neutral-500 mt-1">Manage your active medications and request refills.</p>
+        </div>
       </div>
 
       <div className="grid md:grid-cols-3 gap-6">

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Calendar, User, ArrowRight, Clock, Tag, FileText } from 'lucide-react';
+import { Search, Calendar, User, ArrowRight, Clock, Tag, FileText, ArrowLeft } from 'lucide-react';
 import { blogAPI } from '../../api/generalAPI';
 import { useDebounce } from '../../hooks/useDebounce';
 
@@ -70,6 +70,7 @@ function BlogPage() {
   return (
     <section className="section-padding">
       <div className="container-custom">
+        <Link to="/" className="inline-flex items-center gap-2 text-primary-700 font-medium hover:text-primary-800 mb-6"><ArrowLeft size={16} /> Back to Home</Link>
         <div className="text-center mb-12">
           <span className="text-primary-700 font-medium">Our Blog</span>
           <h1 className="text-4xl md:text-5xl font-display font-bold text-neutral-900 mt-2">

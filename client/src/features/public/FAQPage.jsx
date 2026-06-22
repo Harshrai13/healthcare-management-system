@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ChevronDown, Search } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ChevronDown, Search, ArrowLeft } from 'lucide-react';
 
 const faqData = [
   {
@@ -67,6 +68,9 @@ function FAQPage() {
   return (
     <section className="section-padding">
       <div className="container-custom">
+        <Link to="/" className="inline-flex items-center gap-2 text-primary-700 font-medium hover:text-primary-800 mb-6">
+          <ArrowLeft size={16} /> Back to Home
+        </Link>
         <div className="text-center mb-12">
           <span className="text-primary-700 font-medium">FAQ</span>
           <h1 className="text-4xl md:text-5xl font-display font-bold text-neutral-900 mt-2">

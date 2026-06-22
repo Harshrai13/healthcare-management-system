@@ -17,4 +17,7 @@ const insuranceInfoSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+insuranceInfoSchema.index({ patientId: 1, claimStatus: 1 });
+insuranceInfoSchema.index({ provider: 1 });
+
 module.exports = mongoose.model('InsuranceInfo', insuranceInfoSchema);

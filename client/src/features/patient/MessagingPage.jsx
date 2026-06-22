@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Send, Search, Shield } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Send, Search, Shield, ArrowLeft } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../api/axios';
 import { useSocket } from '../../hooks/useSocket';
@@ -27,6 +28,7 @@ function useChatMessages(partnerId) {
 }
 
 export default function MessagingPage() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { socket, joinRoom, leaveRoom, emitTyping } = useSocket();
   const [activePartnerId, setActivePartnerId] = useState(null);
@@ -116,9 +118,14 @@ export default function MessagingPage() {
 
   return (
     <div className="h-[calc(100vh-140px)] flex flex-col pb-4">
-      <div className="mb-4">
-        <h1 className="text-2xl font-display font-bold text-neutral-900">Secure Messaging</h1>
-        <p className="text-neutral-500 mt-1">Communicate directly with your care team.</p>
+      <div className="mb-4 flex items-center gap-3">
+        <button onClick={() => navigate(-1)} className="p-2 text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 rounded-lg transition-colors">
+          <ArrowLeft size={20} />
+        </button>
+        <div>
+          <h1 className="text-2xl font-display font-bold text-neutral-900">Secure Messaging</h1>
+          <p className="text-neutral-500 mt-1">Communicate directly with your care team.</p>
+        </div>
       </div>
 
       <div className="flex-1 bg-white rounded-2xl border border-neutral-100 shadow-sm overflow-hidden flex flex-col md:flex-row min-h-0">

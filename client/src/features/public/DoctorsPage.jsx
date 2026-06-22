@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, MapPin, Star, Video, Users, Clock, Filter } from 'lucide-react';
+import { Search, MapPin, Star, Video, Users, Clock, Filter, ArrowLeft } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useDoctors } from '../../hooks/useDoctors';
 import { useDebounce } from '../../hooks/useDebounce';
@@ -41,6 +41,7 @@ function DoctorsPage() {
       {/* Search Header */}
       <section className="bg-forest-gradient py-16 px-4">
         <div className="container-custom">
+          <Link to="/" className="inline-flex items-center gap-2 text-white/80 font-medium hover:text-white mb-4"><ArrowLeft size={16} /> Back to Home</Link>
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-4xl md:text-5xl font-display font-bold text-white mb-6">
               Find Your Perfect Doctor

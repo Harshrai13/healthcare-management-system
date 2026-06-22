@@ -1,6 +1,7 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Shield, Plus, Edit2, Trash2, X as XIcon, FileCheck, Calendar, AlertCircle } from 'lucide-react';
+import { Shield, Plus, Edit2, Trash2, X as XIcon, FileCheck, Calendar, AlertCircle, ArrowLeft } from 'lucide-react';
 import { insuranceAPI } from '../../api/generalAPI';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -19,6 +20,7 @@ const emptyForm = {
 };
 
 export default function InsurancePage() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showFormModal, setShowFormModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -123,9 +125,14 @@ export default function InsurancePage() {
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-12">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-display font-bold text-neutral-900">Insurance Policies</h1>
-          <p className="text-neutral-500 mt-1">Manage your health insurance information.</p>
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate(-1)} className="p-2 text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 rounded-lg transition-colors">
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h1 className="text-2xl font-display font-bold text-neutral-900">Insurance Policies</h1>
+            <p className="text-neutral-500 mt-1">Manage your health insurance information.</p>
+          </div>
         </div>
         <button
           onClick={() => setShowFormModal(true)}

@@ -1,4 +1,5 @@
-import { Bell, CheckCircle, Calendar, MessageSquare, AlertTriangle, FileText, Settings, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Bell, CheckCircle, Calendar, MessageSquare, AlertTriangle, FileText, Settings, X, ArrowLeft } from 'lucide-react';
 import { useNotifications } from '../../hooks/useNotifications';
 import LoadingSpinner from '../../components/LoadingSpinner';
 
@@ -26,6 +27,7 @@ function formatTimeAgo(dateStr) {
 }
 
 export default function NotificationsPage() {
+  const navigate = useNavigate();
   const { notifications, isLoading, unreadCount, markAsRead, markAllAsRead } = useNotifications();
 
   if (isLoading) return <LoadingSpinner />;
@@ -33,12 +35,17 @@ export default function NotificationsPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-12">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-display font-bold text-neutral-900">Notifications</h1>
-          <p className="text-neutral-500 mt-1">
-            Stay updated on your health alerts and messages.
-            {unreadCount > 0 && <span className="ml-1 text-primary-600 font-medium">({unreadCount} unread)</span>}
-          </p>
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate(-1)} className="p-2 text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 rounded-lg transition-colors">
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h1 className="text-2xl font-display font-bold text-neutral-900">Notifications</h1>
+            <p className="text-neutral-500 mt-1">
+              Stay updated on your health alerts and messages.
+              {unreadCount > 0 && <span className="ml-1 text-primary-600 font-medium">({unreadCount} unread)</span>}
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-3">
           {unreadCount > 0 && (

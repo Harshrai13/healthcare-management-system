@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { User as UserIcon, Mail as MailIcon, Phone as PhoneIcon, MapPin as MapPinIcon, Edit2 as EditIcon, Shield as ShieldIcon, Save as SaveIcon, Camera as CameraIcon, X as XIcon, Lock as LockIcon, Eye as EyeIcon, EyeOff as EyeOffIcon } from 'lucide-react';
+import { User as UserIcon, Mail as MailIcon, Phone as PhoneIcon, MapPin as MapPinIcon, Edit2 as EditIcon, Shield as ShieldIcon, Save as SaveIcon, Camera as CameraIcon, X as XIcon, Lock as LockIcon, Eye as EyeIcon, EyeOff as EyeOffIcon, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { userAPI } from '../../api/authAPI';
 import LoadingSpinner from '../../components/LoadingSpinner';
 
 export default function ProfilePage() {
   const { user } = useSelector((state) => state.auth);
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState(null);
@@ -166,9 +168,12 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-12">
-      <div>
-        <h1 className="text-2xl font-display font-bold text-neutral-900">My Profile</h1>
-        <p className="text-neutral-500 mt-1">Manage your personal information and security settings.</p>
+      <div className="flex items-center gap-3">
+        <button onClick={() => navigate(-1)} className="p-2 text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 rounded-lg transition-colors"><ArrowLeft size={20} /></button>
+        <div>
+          <h1 className="text-2xl font-display font-bold text-neutral-900">My Profile</h1>
+          <p className="text-neutral-500 mt-1">Manage your personal information and security settings.</p>
+        </div>
       </div>
 
       {/* Profile Header */}

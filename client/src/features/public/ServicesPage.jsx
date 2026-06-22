@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ArrowLeft } from 'lucide-react';
 
 const servicesList = [
   { name: 'Family Medicine', slug: 'family-medicine', desc: 'Comprehensive healthcare for patients of all ages, from routine checkups to chronic disease management.' },
@@ -21,6 +21,7 @@ function ServicesPage() {
   return (
     <section className="section-padding">
       <div className="container-custom">
+        <Link to="/" className="inline-flex items-center gap-2 text-primary-700 font-medium hover:text-primary-800 mb-6"><ArrowLeft size={16} /> Back to Home</Link>
         <div className="text-center mb-16">
           <span className="text-primary-700 font-medium">What We Offer</span>
           <h1 className="text-4xl md:text-5xl font-display font-bold text-neutral-900 mt-2">Our Medical Services</h1>

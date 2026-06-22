@@ -1,9 +1,13 @@
-import { FileText } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { FileText, ArrowLeft } from 'lucide-react';
 
 function TermsPage() {
   return (
     <section className="section-padding">
       <div className="container-custom max-w-4xl">
+        <Link to="/" className="inline-flex items-center gap-2 text-primary-700 font-medium hover:text-primary-800 mb-6">
+          <ArrowLeft size={16} /> Back to Home
+        </Link>
         <div className="text-center mb-12">
           <div className="w-16 h-16 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <FileText size={28} className="text-primary-700" />

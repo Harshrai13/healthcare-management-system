@@ -1,11 +1,13 @@
 import { useMemo, useState, useRef } from 'react';
-import { FileText, Download, Eye, Search, Filter, Calendar, Activity, Pill, Upload, X as XIcon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { FileText, Download, Eye, Search, Filter, Calendar, Activity, Pill, Upload, X as XIcon, ArrowLeft } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { recordsAPI, documentsAPI } from '../../api/medicalAPI';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../../components/LoadingSpinner';
 
 export default function MedicalRecordsPage() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('ALL');
@@ -112,9 +114,14 @@ export default function MedicalRecordsPage() {
   return (
     <div className="space-y-6 pb-12">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-display font-bold text-neutral-900">Medical Records</h1>
-          <p className="text-neutral-500 mt-1">View and download your health documents.</p>
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate(-1)} className="p-2 text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 rounded-lg transition-colors">
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h1 className="text-2xl font-display font-bold text-neutral-900">Medical Records</h1>
+            <p className="text-neutral-500 mt-1">View and download your health documents.</p>
+          </div>
         </div>
         <div className="flex gap-3 w-full md:w-auto">
           <button

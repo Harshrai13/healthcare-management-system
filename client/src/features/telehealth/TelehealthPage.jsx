@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Mic, MicOff, Video as VideoIcon, VideoOff, Monitor, MonitorOff, PhoneOff, Clock } from 'lucide-react';
+import { Mic, MicOff, Video as VideoIcon, VideoOff, Monitor, MonitorOff, PhoneOff, Clock, ArrowLeft } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { io } from 'socket.io-client';
@@ -223,6 +223,7 @@ export default function TelehealthPage() {
     <div className="h-screen bg-neutral-900 flex flex-col overflow-hidden">
       <header className="h-16 bg-neutral-800 border-b border-neutral-700 flex items-center justify-between px-6 shrink-0 z-20">
         <div className="flex items-center gap-4">
+          <button onClick={() => navigate(-1)} className="p-1.5 text-neutral-400 hover:text-white hover:bg-neutral-700 rounded-lg transition-colors"><ArrowLeft size={18} /></button>
           <div className="flex items-center gap-2">
             <span className={`w-2.5 h-2.5 rounded-full ${callStatus === 'connected' ? 'bg-danger animate-pulse' : 'bg-yellow-500'}`} />
             <span className="font-semibold text-white">{callStatus === 'connected' ? 'Live Call' : 'Waiting...'}</span>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Star, Quote, PenLine, RefreshCw, ThumbsUp } from 'lucide-react';
+import { Star, Quote, PenLine, RefreshCw, ThumbsUp, ArrowLeft } from 'lucide-react';
 import { reviewsAPI, publicAPI } from '../../api/generalAPI';
 
 function ReviewsPage() {
@@ -72,6 +72,9 @@ function ReviewsPage() {
   return (
     <section className="section-padding">
       <div className="container-custom">
+        <Link to="/" className="inline-flex items-center gap-2 text-primary-700 font-medium hover:text-primary-800 mb-6">
+          <ArrowLeft size={16} /> Back to Home
+        </Link>
         <div className="text-center mb-12">
           <span className="text-primary-700 font-medium">Testimonials</span>
           <h1 className="text-4xl md:text-5xl font-display font-bold text-neutral-900 mt-2">

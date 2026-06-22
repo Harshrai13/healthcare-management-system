@@ -9,4 +9,6 @@ const serviceSchema = new mongoose.Schema({
   sortOrder: { type: Number, default: 0 },
 });
 
+serviceSchema.index({ isActive: 1, sortOrder: 1 });
+
 module.exports = mongoose.model('Service', serviceSchema);

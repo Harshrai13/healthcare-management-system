@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { MapPin, Phone, Mail, Clock, Send } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { MapPin, Phone, Mail, Clock, Send, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { publicAPI, settingsAPI } from '../../api/generalAPI';
 
@@ -53,6 +54,7 @@ function ContactPage() {
   return (
     <section className="section-padding">
       <div className="container-custom">
+        <Link to="/" className="inline-flex items-center gap-2 text-primary-700 font-medium hover:text-primary-800 mb-6"><ArrowLeft size={16} /> Back to Home</Link>
         <div className="text-center mb-16">
           <span className="text-primary-700 font-medium">Get in Touch</span>
           <h1 className="text-4xl md:text-5xl font-display font-bold text-neutral-900 mt-2">Contact Us</h1>

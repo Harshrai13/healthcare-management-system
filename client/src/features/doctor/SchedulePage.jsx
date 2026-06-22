@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Calendar, Save } from 'lucide-react';
+import { Calendar, Save, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { doctorsAPI } from '../../api/doctorsAPI';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -10,6 +11,7 @@ const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Sat
 const timeSlots = ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00'];
 
 function SchedulePage() {
+  const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
@@ -77,9 +79,14 @@ function SchedulePage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-display font-bold text-neutral-900">My Schedule</h1>
-          <p className="text-neutral-500 mt-1">Manage your weekly availability and time slots</p>
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate(-1)} className="p-2 text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 rounded-lg transition-colors">
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h1 className="text-2xl font-display font-bold text-neutral-900">My Schedule</h1>
+            <p className="text-neutral-500 mt-1">Manage your weekly availability and time slots</p>
+          </div>
         </div>
         {!isEditing ? (
           <button onClick={() => setIsEditing(true)} className="btn-primary flex items-center gap-2">

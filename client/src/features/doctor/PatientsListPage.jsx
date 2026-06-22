@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Search, Eye, FileText, Calendar } from 'lucide-react';
+import { Search, Eye, FileText, Calendar, ArrowLeft } from 'lucide-react';
 import { appointmentsAPI } from '../../api/appointmentsAPI';
 import LoadingSpinner from '../../components/LoadingSpinner';
 
 function PatientsListPage() {
+  const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPatient, setSelectedPatient] = useState(null);
@@ -68,9 +70,14 @@ function PatientsListPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-display font-bold text-neutral-900">My Patients</h1>
-          <p className="text-neutral-500 mt-1">{patients.length} patients assigned to you</p>
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate(-1)} className="p-2 text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 rounded-lg transition-colors">
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h1 className="text-2xl font-display font-bold text-neutral-900">My Patients</h1>
+            <p className="text-neutral-500 mt-1">{patients.length} patients assigned to you</p>
+          </div>
         </div>
       </div>
 

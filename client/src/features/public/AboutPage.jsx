@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Target, Heart, Lightbulb, Shield, Trophy, ChevronRight, Linkedin } from 'lucide-react';
+import { Target, Heart, Lightbulb, Shield, Trophy, ChevronRight, Linkedin, ArrowLeft } from 'lucide-react';
 import { memo } from 'react';
 
 const ValuesSection = memo(function ValuesSection() {
@@ -126,6 +126,9 @@ const JourneySection = memo(function JourneySection() {
 function AboutPage() {
   return (
     <main className="pt-20">
+      <div className="container-custom pt-6">
+        <Link to="/" className="inline-flex items-center gap-2 text-primary-700 font-medium hover:text-primary-800 mb-4"><ArrowLeft size={16} /> Back to Home</Link>
+      </div>
       {/* Hero Section */}
       <section className="bg-emerald-gradient py-20 lg:py-28 text-center px-4 relative">
         <div className="container-custom relative z-10">
