@@ -99,7 +99,24 @@ export default function AdminSettingsPage() {
   };
 
   const handleSave = () => {
-    saveMutation.mutate(settings);
+    // Sync Contact fields to Footer fields if footer fields are empty or unchanged from defaults
+    const dataToSave = { ...settings };
+    if (!dataToSave.footerPhone || dataToSave.footerPhone === dataToSave.phone) {
+      dataToSave.footerPhone = dataToSave.phone;
+    }
+    if (!dataToSave.footerEmail || dataToSave.footerEmail === dataToSave.infoEmail) {
+      dataToSave.footerEmail = dataToSave.infoEmail;
+    }
+    if (!dataToSave.footerAddress || dataToSave.footerAddress.replace(/\n/g, ', ') === dataToSave.address) {
+      dataToSave.footerAddress = dataToSave.address;
+    }
+    if (!dataToSave.footerWeekdayHours || dataToSave.footerWeekdayHours === dataToSave.weekdayHours) {
+      dataToSave.footerWeekdayHours = dataToSave.weekdayHours;
+    }
+    if (!dataToSave.footerWeekendHours || dataToSave.footerWeekendHours === dataToSave.saturdayHours) {
+      dataToSave.footerWeekendHours = dataToSave.saturdayHours;
+    }
+    saveMutation.mutate(dataToSave);
   };
 
   const sections = [

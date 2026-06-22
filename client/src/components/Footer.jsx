@@ -117,22 +117,22 @@ function Footer() {
                 <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0 text-primary-400">
                   <MapPin size={16} />
                 </div>
-                <span className="text-primary-100/80 leading-relaxed mt-1 whitespace-pre-line">{s.footerAddress || '123 Healthcare Ave, Suite 100\nSouth Carolina, SC 29601'}</span>
+                <span className="text-primary-100/80 leading-relaxed mt-1 whitespace-pre-line">{s.footerAddress || s.address || '123 Healthcare Ave, Suite 100\nSouth Carolina, SC 29601'}</span>
               </li>
               <li className="flex items-center gap-4">
                 <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0 text-primary-400">
                   <Phone size={16} />
                 </div>
-                <a href={`tel:${s.footerPhone?.replace(/\s/g, '')}`} className="text-primary-100/80 hover:text-white transition-colors font-medium">
-                  {s.footerPhone || '+1 (800) 123-4567'}
+                <a href={`tel:${(s.footerPhone || s.phone)?.replace(/\s/g, '')}`} className="text-primary-100/80 hover:text-white transition-colors font-medium">
+                  {s.footerPhone || s.phone || '+1 (800) 123-4567'}
                 </a>
               </li>
               <li className="flex items-center gap-4">
                 <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0 text-primary-400">
                   <Mail size={16} />
                 </div>
-                <a href={`mailto:${s.footerEmail}`} className="text-primary-100/80 hover:text-white transition-colors">
-                  {s.footerEmail || 'info@verdantcare.com'}
+                <a href={`mailto:${s.footerEmail || s.infoEmail}`} className="text-primary-100/80 hover:text-white transition-colors">
+                  {s.footerEmail || s.infoEmail || 'info@verdantcare.com'}
                 </a>
               </li>
               <li className="flex items-start gap-4">
@@ -140,8 +140,8 @@ function Footer() {
                   <Clock size={16} />
                 </div>
                 <div className="text-primary-100/80 mt-1">
-                  <p>{s.footerWeekdayHours || 'Mon-Fri: 9am - 6pm'}</p>
-                  <p>{s.footerWeekendHours || 'Sat: 9am - 2pm'}</p>
+                  <p>{s.footerWeekdayHours || s.weekdayHours || 'Mon-Fri: 9am - 6pm'}</p>
+                  <p>{s.footerWeekendHours || s.saturdayHours || 'Sat: 9am - 2pm'}</p>
                 </div>
               </li>
             </ul>
