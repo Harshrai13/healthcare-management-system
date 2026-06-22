@@ -75,6 +75,20 @@ async function updateSettings(req, res, next) {
       }
     });
 
+    // Auto-clear footer fields if they match old defaults — let them fall back to Contact fields
+    const oldDefaults = {
+      footerAddress: '123 Healthcare Ave, Suite 100\nSouth Carolina, SC 29601',
+      footerPhone: '+1 (800) 123-4567',
+      footerEmail: 'info@verdantcare.com',
+      footerWeekdayHours: 'Mon-Fri: 9am - 6pm',
+      footerWeekendHours: 'Sat: 9am - 2pm',
+    };
+    Object.entries(oldDefaults).forEach(([field, defaultVal]) => {
+      if (settings[field] === defaultVal) {
+        settings[field] = undefined;
+      }
+    });
+
     await settings.save();
     logger.info('Settings updated', { adminId: req.user.id });
 
