@@ -89,10 +89,26 @@ app.use('/api', notFoundHandler);
 // ─── Serve React frontend in production ──────────────────────────
 if (process.env.NODE_ENV === 'production') {
   const clientBuildPath = path.join(__dirname, '../../client/dist');
-  app.use(express.static(clientBuildPath));
+
+  // Serve hashed static assets (JS/CSS) with long-term cache
+  app.use(express.static(clientBuildPath, {
+    maxAge: '1y',
+    immutable: true,
+    setHeaders: (res, filePath) => {
+      // Never cache index.html — always revalidate
+      if (path.basename(filePath) === 'index.html') {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+      }
+    },
+  }));
 
   // SPA fallback: any non-API GET route serves index.html (React Router handles it)
   app.get('*', (req, res) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     res.sendFile(path.join(clientBuildPath, 'index.html'));
   });
 } else {

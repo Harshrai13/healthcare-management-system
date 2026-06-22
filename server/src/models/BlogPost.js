@@ -15,6 +15,7 @@ const blogPostSchema = new mongoose.Schema(
       enum: ['DRAFT', 'PUBLISHED', 'ARCHIVED'],
       default: 'DRAFT',
     },
+    views: { type: Number, default: 0 },
     publishedAt: { type: Date },
   },
   { timestamps: true }

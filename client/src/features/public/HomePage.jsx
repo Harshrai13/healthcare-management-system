@@ -77,7 +77,7 @@ const HeroSection = memo(function HeroSection() {
           <div className="hidden lg:flex relative justify-center">
             <div className="relative w-full max-w-md">
               {/* Main card */}
-              <div className="bg-white rounded-3xl shadow-2xl border border-neutral-100 p-8 relative z-10">
+              <div className="rounded-3xl p-8 relative z-10">
                 <div className="flex items-center gap-4 mb-8">
                   <div className="w-14 h-14 bg-primary-50 rounded-2xl flex items-center justify-center">
                     <Stethoscope size={28} className="text-primary-600" />
