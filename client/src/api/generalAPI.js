@@ -44,7 +44,12 @@ export const adminAPI = {
   getAnalytics: (params) => api.get('/admin/analytics', { params }),
   getUsers: (params) => api.get('/admin/users', { params }),
   updateUserRole: (id, role) => api.put(`/admin/users/${id}/role`, { role }),
-  createDoctor: (data) => api.post('/admin/doctors', data),
+  createDoctor: (data) => {
+      if (data instanceof FormData) {
+        return api.post('/admin/doctors', data, { headers: { 'Content-Type': undefined } });
+      }
+      return api.post('/admin/doctors', data);
+    },
   getAuditLogs: (params) => api.get('/admin/audit-logs', { params }),
 };
 

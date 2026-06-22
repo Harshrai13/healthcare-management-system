@@ -2,6 +2,7 @@ const { User, DoctorProfile, Appointment, Payment, AuditLog } = require('../mode
 const { AppError, ErrorCodes } = require('../utils/AppError');
 const logger = require('../utils/logger');
 const { generateAuthTokens } = require('../utils/token');
+const { uploadToCloudinary } = require('../config/cloudinary');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
@@ -74,7 +75,7 @@ async function getUsers(req, res, next) {
     if (role) where.role = role;
     if (search) where.$or = [{ firstName: { $regex: search, $options: 'i' } }, { lastName: { $regex: search, $options: 'i' } }, { email: { $regex: search, $options: 'i' } }];
     const [users, total] = await Promise.all([
-      User.find(where).select('_id email firstName lastName phone role isActive createdAt').skip(skip).limit(parseInt(limit)).sort({ createdAt: -1 }),
+      User.find(where).select('_id email firstName lastName phone role isActive avatar createdAt').skip(skip).limit(parseInt(limit)).sort({ createdAt: -1 }),
       User.countDocuments(where),
     ]);
     res.json({ success: true, data: { users, pagination: { page: parseInt(page), limit: parseInt(limit), total, totalPages: Math.ceil(total / parseInt(limit)) } } });
@@ -122,6 +123,17 @@ async function createDoctor(req, res, next) {
     const tempPassword = crypto.randomBytes(8).toString('hex');
     const passwordHash = await bcrypt.hash(tempPassword, 12);
 
+    // Handle photo upload
+    let avatar = undefined;
+    if (req.file) {
+      try {
+        const result = await uploadToCloudinary(req.file.buffer, 'doctors', 'image');
+        avatar = result.url;
+      } catch (uploadErr) {
+        logger.warn('Doctor photo upload failed, continuing without photo:', uploadErr.message);
+      }
+    }
+
     const user = await User.create({
       email: email.toLowerCase(),
       passwordHash,
@@ -130,6 +142,7 @@ async function createDoctor(req, res, next) {
       role: 'DOCTOR',
       isActive: true,
       isVerified: true,
+      avatar,
     });
 
     const doctorProfile = await DoctorProfile.create({
@@ -154,7 +167,7 @@ async function createDoctor(req, res, next) {
       success: true,
       message: 'Doctor added successfully. Temporary password: ' + tempPassword,
       data: {
-        user: { _id: user._id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role },
+        user: { _id: user._id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role, avatar: user.avatar },
         doctorProfile,
         tempPassword,
       },

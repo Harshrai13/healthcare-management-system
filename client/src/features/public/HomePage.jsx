@@ -105,41 +105,31 @@ function StatsAndReviewSection() {
   return (
     <section className="bg-primary-600 border-y border-primary-700 relative z-20">
       <div className="container-custom py-12">
-        {/* ── Top row: Stats cards ── */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-          <Link to="/doctors" className="group bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-5 hover:bg-white/15 transition-all duration-300">
-            <Stethoscope size={22} className="text-primary-200 mb-3" />
-            <p className="text-2xl font-display font-bold text-white">
-              {loading ? <span className="inline-block w-12 h-7 bg-primary-500/40 rounded animate-pulse" /> : doctorCount}
-            </p>
-            <p className="text-primary-200 text-xs mt-1">Expert Doctors</p>
-            <p className="text-primary-300/60 text-xs mt-2 flex items-center gap-1 group-hover:gap-2 transition-all">
-              Meet our specialists <ArrowRight size={12} />
-            </p>
+        {/* ── Top row: Expert Doctors card + Write a Review card ── */}
+        <div className="grid md:grid-cols-2 gap-6 mb-10">
+          {/* Expert Doctors — clickable card */}
+          <Link
+            to="/doctors"
+            className="group bg-white/10 backdrop-blur-sm border border-white/20 rounded-3xl p-8 flex items-center gap-6 hover:bg-white/15 transition-all duration-300"
+          >
+            <div className="w-16 h-16 rounded-2xl bg-primary-500/30 flex items-center justify-center shrink-0 group-hover:bg-primary-400/40 transition-colors">
+              <Stethoscope size={30} className="text-white" />
+            </div>
+            <div>
+              <p className="text-4xl font-display font-black text-white mb-1">
+                {loading ? (
+                  <span className="inline-block w-16 h-9 bg-primary-500/40 rounded animate-pulse" />
+                ) : doctorCount}
+              </p>
+              <p className="text-primary-100 font-semibold text-sm tracking-wide uppercase">Expert Doctors</p>
+              <p className="text-primary-200/70 text-xs mt-1 flex items-center gap-1 group-hover:gap-2 transition-all">
+                Meet our specialists <ArrowRight size={13} />
+              </p>
+            </div>
           </Link>
 
-          <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-5">
-            <Users size={22} className="text-primary-200 mb-3" />
-            <p className="text-2xl font-display font-bold text-white">{stats?.patients != null ? `${stats.patients}+` : '10k+'}</p>
-            <p className="text-primary-200 text-xs mt-1">Happy Patients</p>
-          </div>
-
-          <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-5">
-            <Heart size={22} className="text-primary-200 mb-3" />
-            <p className="text-2xl font-display font-bold text-white">{stats?.services != null ? `${stats.services}+` : '15+'}</p>
-            <p className="text-primary-200 text-xs mt-1">Specialties</p>
-          </div>
-
-          <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-5">
-            <Star size={22} className="text-primary-200 mb-3" />
-            <p className="text-2xl font-display font-bold text-white">4.9</p>
-            <p className="text-primary-200 text-xs mt-1">Patient Rating</p>
-          </div>
-        </div>
-
-        {/* ── Write a Review card ─ */}
-        <div className="max-w-xl mx-auto mb-10">
-          <div className="bg-white rounded-2xl p-6 shadow-xl">
+          {/* Write a Review card */}
+          <div className="bg-white rounded-3xl p-8 shadow-xl">
             {submittedReview ? (
               <div className="text-center py-4">
                 <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-4">

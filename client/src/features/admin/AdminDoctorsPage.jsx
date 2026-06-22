@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Star, MoreVertical, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Plus, Search, Star, MoreVertical, CheckCircle, XCircle, Clock, Upload, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { doctorsAPI, servicesAPI } from '../../api/doctorsAPI';
 import { adminAPI } from '../../api/generalAPI';
@@ -9,6 +9,9 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 export default function AdminDoctorsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({ firstName: '', lastName: '', email: '', specialty: '', experience: '' });
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const fileInputRef = useRef(null);
   const queryClient = useQueryClient();
 
   const { data: doctors = [], isLoading } = useQuery({
@@ -41,13 +44,24 @@ export default function AdminDoctorsPage() {
 
   const addDoctorMutation = useMutation({
     mutationFn: async (newDoctor) => {
-      const { data } = await adminAPI.createDoctor(newDoctor);
+      const fd = new FormData();
+      fd.append('firstName', newDoctor.firstName);
+      fd.append('lastName', newDoctor.lastName);
+      fd.append('email', newDoctor.email);
+      fd.append('specialty', newDoctor.specialty);
+      fd.append('experience', newDoctor.experience);
+      if (newDoctor.photo) {
+        fd.append('photo', newDoctor.photo);
+      }
+      const { data } = await adminAPI.createDoctor(fd);
       return data;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['admin_doctors'] });
       setIsModalOpen(false);
       setFormData({ firstName: '', lastName: '', email: '', specialty: '', experience: '' });
+      setPhotoFile(null);
+      setPhotoPreview(null);
       const tempPwd = data?.data?.tempPassword;
       toast.success(
         tempPwd
@@ -109,9 +123,13 @@ export default function AdminDoctorsPage() {
             return (
               <div key={doc._id || doc.id} className="bg-white rounded-3xl p-6 border border-neutral-100 shadow-sm hover:-translate-y-1 transition-transform duration-300">
                 <div className="flex justify-between items-start mb-4">
-                  <div className="w-16 h-16 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-xl font-bold">
-                    {getInitials(docName)}
-                  </div>
+                  {doc.avatar ? (
+                    <img src={doc.avatar} alt={docName} className="w-16 h-16 rounded-full object-cover border-2 border-primary-200" />
+                  ) : (
+                    <div className="w-16 h-16 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-xl font-bold">
+                      {getInitials(docName)}
+                    </div>
+                  )}
                   <button className="p-1.5 text-neutral-400 hover:bg-neutral-50 rounded-lg">
                     <MoreVertical size={20} />
                   </button>
@@ -156,10 +174,57 @@ export default function AdminDoctorsPage() {
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-2xl w-full p-8 relative shadow-2xl">
-            <button onClick={() => setIsModalOpen(false)} className="absolute top-6 right-6 text-neutral-400 hover:text-neutral-700">
+            <button onClick={() => { setIsModalOpen(false); setPhotoFile(null); setPhotoPreview(null); }} className="absolute top-6 right-6 text-neutral-400 hover:text-neutral-700">
               <XCircle size={24} />
             </button>
             <h2 className="text-2xl font-bold text-neutral-900 mb-6">Add New Doctor</h2>
+
+            {/* Photo Upload */}
+            <div className="flex items-center gap-6 mb-6">
+              <div className="w-24 h-24 rounded-full bg-neutral-100 flex items-center justify-center overflow-hidden shrink-0 border-2 border-dashed border-neutral-300">
+                {photoPreview ? (
+                  <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
+                ) : (
+                  <Upload size={28} className="text-neutral-400" />
+                )}
+              </div>
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-neutral-700 mb-2">Doctor Photo</label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setPhotoFile(file);
+                      setPhotoPreview(URL.createObjectURL(file));
+                    }
+                  }}
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="btn-outline text-sm py-2"
+                  >
+                    {photoFile ? 'Change Photo' : 'Upload Photo'}
+                  </button>
+                  {photoFile && (
+                    <button
+                      type="button"
+                      onClick={() => { setPhotoFile(null); setPhotoPreview(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
+                      className="px-3 py-2 text-sm text-neutral-500 hover:text-red-500 transition-colors"
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
+                </div>
+                <p className="text-xs text-neutral-400 mt-1">JPG, PNG or WebP. Max 10MB.</p>
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">First Name</label>
@@ -189,7 +254,7 @@ export default function AdminDoctorsPage() {
             </div>
             <button
               className="btn-primary w-full justify-center"
-              onClick={() => addDoctorMutation.mutate(formData)}
+              onClick={() => addDoctorMutation.mutate({ ...formData, photo: photoFile })}
               disabled={addDoctorMutation.isPending}
             >
               {addDoctorMutation.isPending ? 'Saving...' : 'Save Doctor'}
