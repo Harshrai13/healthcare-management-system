@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { Search, Filter, Download, MoreVertical, Calendar, CheckCircle, XCircle, Clock, Video, Users, Eye, X } from 'lucide-react';
+import { Search, Filter, Download, MoreVertical, Calendar, XCircle, Clock, Video, Users, X, User, Phone, Mail } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { appointmentsAPI } from '../../api/appointmentsAPI';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -10,6 +10,7 @@ export default function AdminAppointmentsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [openMenuId, setOpenMenuId] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [detailApt, setDetailApt] = useState(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -257,28 +258,19 @@ export default function AdminAppointmentsPage() {
                         </button>
                         {openMenuId === (apt._id || apt.id) && (
                           <div className="absolute right-0 top-8 w-44 bg-white rounded-xl shadow-lg border border-neutral-100 py-1 z-30">
-                            <a
-                              href={`/dashboard/appointments`}
-                              className="flex items-center gap-2 px-4 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
-                              onClick={() => setOpenMenuId(null)}
+                            <button
+                              onClick={() => { setDetailApt(apt); setOpenMenuId(null); }}
+                              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
                             >
                               <Eye size={16} /> View Details
-                            </a>
-                            {(apt.status === 'PENDING' || apt.status === 'pending') && (
-                              <>
-                                <button
-                                  onClick={() => handleStatusChange(apt._id || apt.id, 'CONFIRMED')}
-                                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-emerald-600 hover:bg-emerald-50 transition-colors"
-                                >
-                                  <CheckCircle size={16} /> Confirm
-                                </button>
-                                <button
-                                  onClick={() => handleStatusChange(apt._id || apt.id, 'CANCELLED')}
-                                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
-                                >
-                                  <XCircle size={16} /> Cancel
-                                </button>
-                              </>
+                            </button>
+                            {apt.status !== 'CANCELLED' && (
+                              <button
+                                onClick={() => handleStatusChange(apt._id || apt.id, 'CANCELLED')}
+                                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
+                              >
+                                <XCircle size={16} /> Cancel
+                              </button>
                             )}
                           </div>
                         )}
@@ -294,6 +286,85 @@ export default function AdminAppointmentsPage() {
           <p className="text-sm text-neutral-500">Showing {filteredAppointments.length} appointment{filteredAppointments.length !== 1 ? 's' : ''}</p>
         </div>
       </div>
+
+      {/* Appointment Detail Modal */}
+      {detailApt && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setDetailApt(null)}>
+          <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-6 border-b border-neutral-100">
+              <h3 className="text-lg font-bold text-neutral-900">Appointment Details</h3>
+              <button onClick={() => setDetailApt(null)} className="p-1.5 text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 rounded-lg">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="flex items-center gap-3 pb-4 border-b border-neutral-100">
+                {getStatusBadge(detailApt.status)}
+                {getTypeBadge(detailApt.type)}
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-neutral-400 font-medium uppercase mb-1">Patient</p>
+                  <p className="text-sm font-semibold text-neutral-900 flex items-center gap-2"><User size={14} className="text-neutral-400" />{detailApt.patientName || 'Patient'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-neutral-400 font-medium uppercase mb-1">Doctor</p>
+                  <p className="text-sm font-semibold text-neutral-900">{detailApt.doctorName || '-'}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-neutral-400 font-medium uppercase mb-1">Date</p>
+                  <p className="text-sm font-medium text-neutral-900">{new Date(detailApt.date || detailApt.appointmentDate || detailApt.createdAt).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-neutral-400 font-medium uppercase mb-1">Time</p>
+                  <p className="text-sm font-medium text-neutral-900">{new Date(detailApt.date || detailApt.appointmentDate || detailApt.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</p>
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-neutral-400 font-medium uppercase mb-1">Service</p>
+                <p className="text-sm font-medium text-neutral-900">{typeof detailApt.service === 'object' ? detailApt.service?.name : detailApt.service || '-'}</p>
+              </div>
+              {detailApt.patientEmail && (
+                <div>
+                  <p className="text-xs text-neutral-400 font-medium uppercase mb-1">Patient Email</p>
+                  <p className="text-sm font-medium text-neutral-900 flex items-center gap-2"><Mail size={14} className="text-neutral-400" />{detailApt.patientEmail}</p>
+                </div>
+              )}
+              {detailApt.patientPhone && (
+                <div>
+                  <p className="text-xs text-neutral-400 font-medium uppercase mb-1">Patient Phone</p>
+                  <p className="text-sm font-medium text-neutral-900 flex items-center gap-2"><Phone size={14} className="text-neutral-400" />{detailApt.patientPhone}</p>
+                </div>
+              )}
+              {detailApt.notes && (
+                <div>
+                  <p className="text-xs text-neutral-400 font-medium uppercase mb-1">Notes</p>
+                  <p className="text-sm text-neutral-600 bg-neutral-50 rounded-lg p-3">{detailApt.notes}</p>
+                </div>
+              )}
+              <div>
+                <p className="text-xs text-neutral-400 font-medium uppercase mb-1">Appointment ID</p>
+                <p className="text-sm font-mono text-neutral-500">{detailApt._id || detailApt.id}</p>
+              </div>
+            </div>
+            <div className="p-6 border-t border-neutral-100 flex gap-3">
+              {detailApt.status !== 'CANCELLED' && (
+                <button
+                  onClick={() => { handleStatusChange(detailApt._id || detailApt.id, 'CANCELLED'); setDetailApt(null); }}
+                  className="flex-1 py-2.5 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors font-medium text-sm flex items-center justify-center gap-2"
+                >
+                  <XCircle size={16} /> Cancel Appointment
+                </button>
+              )}
+              <button onClick={() => setDetailApt(null)} className="flex-1 py-2.5 border border-neutral-200 text-neutral-700 rounded-xl hover:bg-neutral-50 transition-colors font-medium text-sm">
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
