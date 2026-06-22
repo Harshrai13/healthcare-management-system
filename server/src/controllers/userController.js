@@ -3,6 +3,7 @@ const User = require('../models/User');
 const { AppError, ErrorCodes } = require('../utils/AppError');
 const logger = require('../utils/logger');
 const { generateTOTPSecret, generateQRCode, verifyTOTP } = require('../utils/twoFactor');
+const { uploadToCloudinary } = require('../config/cloudinary');
 
 async function getProfile(req, res, next) {
   try {
@@ -125,4 +126,30 @@ async function disableTwoFactor(req, res, next) {
   }
 }
 
-module.exports = { getProfile, updateProfile, changePassword, setupTwoFactor, verifyTwoFactor, disableTwoFactor };
+async function uploadAvatar(req, res, next) {
+  try {
+    if (!req.file) {
+      throw new AppError('No image file provided.', 400, ErrorCodes.VALIDATION_ERROR);
+    }
+
+    const result = await uploadToCloudinary(req.file.buffer, 'avatars', 'image');
+
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { avatar: result.url },
+      { new: true, projection: '_id email firstName lastName phone avatar role' }
+    );
+
+    logger.info('Avatar uploaded', { userId: user._id });
+
+    res.json({
+      success: true,
+      message: 'Avatar uploaded successfully.',
+      data: user,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+module.exports = { getProfile, updateProfile, changePassword, setupTwoFactor, verifyTwoFactor, disableTwoFactor, uploadAvatar };

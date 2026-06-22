@@ -34,6 +34,7 @@ function DashboardLayout() {
         { name: 'Schedule', path: '/doctor/schedule', icon: Calendar },
         { name: 'My Patients', path: '/doctor/patients', icon: Users },
         { name: 'Consultations', path: '/doctor/consultations', icon: Activity },
+        { name: 'Profile', path: '/doctor/profile', icon: User },
       ];
     }
     if (isAdminRole(role)) {
@@ -245,7 +246,7 @@ function DashboardLayout() {
               {profileMenuOpen && (
                 <div className="absolute right-0 mt-3 w-48 bg-white rounded-2xl shadow-dropdown border border-neutral-100 py-2 animate-scale-in origin-top-right z-50">
                   <Link
-                    to={user?.role === 'DOCTOR' ? '/doctor/dashboard' : isAdminRole(user?.role) ? '/admin/settings' : '/dashboard/profile'}
+                    to={user?.role === 'DOCTOR' ? '/doctor/profile' : isAdminRole(user?.role) ? '/admin/settings' : '/dashboard/profile'}
                     className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-neutral-700 hover:text-primary-600 hover:bg-primary-50 transition-colors"
                     onClick={() => setProfileMenuOpen(false)}
                   >

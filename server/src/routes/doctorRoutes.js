@@ -4,6 +4,7 @@ const { authenticate, authorize } = require('../middleware/auth');
 const doctorController = require('../controllers/doctorController');
 
 router.get('/', doctorController.getAllDoctors);
+router.get('/me', authenticate, authorize('DOCTOR'), doctorController.getMyProfile);
 router.get('/:id', doctorController.getDoctorById);
 router.get('/:id/schedule', doctorController.getDoctorSchedule);
 router.get('/:id/availability', doctorController.getDoctorAvailability);

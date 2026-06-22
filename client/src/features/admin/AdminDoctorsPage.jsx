@@ -1,6 +1,6 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Star, MoreVertical, CheckCircle, XCircle, Clock, Upload, X, Eye } from 'lucide-react';
+import { Plus, Search, Star, MoreVertical, CheckCircle, XCircle, Clock, Upload, X, Eye, Copy } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { doctorsAPI, servicesAPI } from '../../api/doctorsAPI';
 import { adminAPI } from '../../api/generalAPI';
@@ -12,6 +12,7 @@ export default function AdminDoctorsPage() {
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [openMenuId, setOpenMenuId] = useState(null);
+  const [credentials, setCredentials] = useState(null);
   const fileInputRef = useRef(null);
   const queryClient = useQueryClient();
 
@@ -70,12 +71,16 @@ export default function AdminDoctorsPage() {
       setFormData({ firstName: '', lastName: '', email: '', specialty: '', experience: '' });
       setPhotoFile(null);
       setPhotoPreview(null);
-      const tempPwd = data?.data?.tempPassword;
-      toast.success(
-        tempPwd
-          ? `Doctor added! Temporary password: ${tempPwd} — please share it securely.`
-          : 'Doctor added successfully'
-      );
+      const pwd = data?.data?.tempPassword || data?.data?.password;
+      if (pwd) {
+        setCredentials({
+          email: data?.data?.user?.email || formData.email,
+          password: pwd,
+          name: `${data?.data?.user?.firstName || formData.firstName} ${data?.data?.user?.lastName || formData.lastName}`.trim(),
+        });
+      } else {
+        toast.success('Doctor added successfully');
+      }
     },
     onError: (err) => {
       const msg = err?.response?.data?.message || 'Failed to add doctor';
@@ -285,6 +290,48 @@ export default function AdminDoctorsPage() {
             >
               {addDoctorMutation.isPending ? 'Saving...' : 'Save Doctor'}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Credentials Modal */}
+      {credentials && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setCredentials(null)}>
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6 border-b border-neutral-100 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-neutral-900">Login Credentials</h3>
+              <button onClick={() => setCredentials(null)} className="p-1.5 text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 rounded-lg">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-neutral-600">Doctor account created for <strong>{credentials.name}</strong>. Share these credentials securely.</p>
+              <div className="bg-neutral-50 rounded-xl p-4 space-y-3">
+                <div>
+                  <p className="text-xs text-neutral-400 font-medium uppercase mb-1">Email (Login ID)</p>
+                  <p className="text-sm font-semibold text-neutral-900">{credentials.email}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-neutral-400 font-medium uppercase mb-1">Password</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-mono font-semibold text-neutral-900 bg-white px-3 py-1.5 rounded-lg border border-neutral-200 flex-1">{credentials.password}</p>
+                    <button
+                      onClick={() => { navigator.clipboard.writeText(credentials.password); toast.success('Password copied'); }}
+                      className="p-2 text-neutral-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                      title="Copy password"
+                    >
+                      <Copy size={16} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+                <p className="text-xs text-amber-700 font-medium">Share these credentials with the doctor securely. They can change their password after logging in.</p>
+              </div>
+            </div>
+            <div className="p-6 border-t border-neutral-100">
+              <button onClick={() => setCredentials(null)} className="btn-primary w-full justify-center">Done</button>
+            </div>
           </div>
         </div>
       )}

@@ -17,6 +17,7 @@ export const authAPI = {
 export const userAPI = {
   getProfile: () => api.get('/users/me'),
   updateProfile: (data) => api.put('/users/me', data),
+  uploadAvatar: (formData) => api.post('/users/avatar', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
   changePassword: (data) => api.put('/users/change-password', data),
   setupTwoFactor: () => api.post('/users/two-factor/setup'),
   verifyTwoFactor: (token) => api.post('/users/two-factor/verify', { token }),

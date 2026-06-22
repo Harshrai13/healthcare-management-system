@@ -50,6 +50,7 @@ const TelehealthPage = lazy(() => import('./features/telehealth/TelehealthPage')
 
 // Doctor pages
 const DoctorDashboard = lazy(() => import('./features/doctor/DoctorDashboard'));
+const DoctorProfileEditPage = lazy(() => import('./features/doctor/DoctorProfilePage'));
 const SchedulePage = lazy(() => import('./features/doctor/SchedulePage'));
 const PatientsListPage = lazy(() => import('./features/doctor/PatientsListPage'));
 const ConsultationsPage = lazy(() => import('./features/doctor/ConsultationsPage'));
@@ -168,6 +169,7 @@ function App() {
           }
         >
           <Route path="dashboard" element={<DoctorDashboard />} />
+          <Route path="profile" element={<DoctorProfileEditPage />} />
           <Route path="schedule" element={<SchedulePage />} />
           <Route path="patients" element={<PatientsListPage />} />
           <Route path="consultations" element={<ConsultationsPage />} />

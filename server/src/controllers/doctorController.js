@@ -87,6 +87,14 @@ async function getDoctorAvailability(req, res, next) {
   }
 }
 
+async function getMyProfile(req, res, next) {
+  try {
+    const doctor = await DoctorProfile.findOne({ userId: req.user.id }).populate({ path: 'userId', select: 'firstName lastName email avatar phone' });
+    if (!doctor) throw new AppError('Doctor profile not found.', 404, ErrorCodes.NOT_FOUND);
+    res.json({ success: true, data: doctor });
+  } catch (error) { next(error); }
+}
+
 async function updateDoctorProfile(req, res, next) {
   try {
     const { bio, education, certifications, languages, consultationModes, isAvailable } = req.body;
@@ -96,4 +104,4 @@ async function updateDoctorProfile(req, res, next) {
   } catch (error) { next(error); }
 }
 
-module.exports = { getAllDoctors, getDoctorById, getDoctorSchedule, getDoctorAvailability, updateDoctorProfile };
+module.exports = { getAllDoctors, getDoctorById, getDoctorSchedule, getDoctorAvailability, getMyProfile, updateDoctorProfile };

@@ -3,6 +3,7 @@ import api from './axios';
 export const doctorsAPI = {
   getAll: (params) => api.get('/doctors', { params }),
   getById: (id) => api.get(`/doctors/${id}`),
+  getProfile: () => api.get('/doctors/me'),
   getSchedule: (id) => api.get(`/doctors/${id}/schedule`),
   updateProfile: (id, data) => api.put(`/doctors/${id}/profile`, data),
 };
