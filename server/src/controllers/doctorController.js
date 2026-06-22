@@ -31,7 +31,12 @@ async function getAllDoctors(req, res, next) {
 
 async function getDoctorById(req, res, next) {
   try {
-    const doctor = await DoctorProfile.findById(req.params.id).populate({ path: 'userId', select: 'firstName lastName email avatar' });
+    const { id } = req.params;
+    // Try finding by DoctorProfile _id first, then by userId
+    let doctor = await DoctorProfile.findById(id).populate({ path: 'userId', select: 'firstName lastName email avatar' });
+    if (!doctor) {
+      doctor = await DoctorProfile.findOne({ userId: id }).populate({ path: 'userId', select: 'firstName lastName email avatar' });
+    }
     if (!doctor) throw new AppError('Doctor not found.', 404, ErrorCodes.NOT_FOUND);
     const availableSchedules = doctor.schedules.filter((s) => s.isAvailable).sort((a, b) => a.dayOfWeek - b.dayOfWeek);
     res.json({ success: true, data: { ...doctor.toObject(), schedules: availableSchedules } });
@@ -40,7 +45,11 @@ async function getDoctorById(req, res, next) {
 
 async function getDoctorSchedule(req, res, next) {
   try {
-    const doctor = await DoctorProfile.findById(req.params.id);
+    const { id } = req.params;
+    let doctor = await DoctorProfile.findById(id);
+    if (!doctor) {
+      doctor = await DoctorProfile.findOne({ userId: id });
+    }
     if (!doctor) throw new AppError('Doctor not found.', 404, ErrorCodes.NOT_FOUND);
     const schedules = doctor.schedules.filter((s) => s.isAvailable).sort((a, b) => a.dayOfWeek - b.dayOfWeek);
     const timeOff = doctor.timeOffs.filter((t) => t.endDate >= new Date());
@@ -53,7 +62,11 @@ async function getDoctorAvailability(req, res, next) {
     const { date } = req.query;
     if (!date) throw new AppError('Date is required.', 400, ErrorCodes.VALIDATION_ERROR);
 
-    const doctor = await DoctorProfile.findById(req.params.id);
+    const { id } = req.params;
+    let doctor = await DoctorProfile.findById(id);
+    if (!doctor) {
+      doctor = await DoctorProfile.findOne({ userId: id });
+    }
     if (!doctor) throw new AppError('Doctor not found.', 404, ErrorCodes.NOT_FOUND);
 
     const dayStart = new Date(date);
