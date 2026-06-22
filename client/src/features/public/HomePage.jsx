@@ -37,7 +37,7 @@ const HeroSection = memo(function HeroSection() {
             <img
               src="/logo.png"
               alt="VerdantCare Medical Center Logo"
-              className="w-full max-w-md object-contain drop-shadow-xl"
+              className="w-full max-w-lg object-contain"
             />
           </div>
 
