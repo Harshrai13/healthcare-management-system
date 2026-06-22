@@ -4,41 +4,116 @@ import { memo, useState, useEffect } from 'react';
 import { publicAPI, reviewsAPI } from '../../api/generalAPI';
 import toast from 'react-hot-toast';
 
-// ─── HERO (original with logo) ────────────────────────────────────────────────
+// ─── HERO ────────────────────────────────────────────────────────────────────
 const HeroSection = memo(function HeroSection() {
+  const [phone, setPhone] = useState('');
+
+  useEffect(() => {
+    import('../../api/generalAPI').then(({ settingsAPI }) => {
+      settingsAPI.getPublic()
+        .then(res => setPhone(res.data.data?.phone || ''))
+        .catch(() => {});
+    });
+  }, []);
+
+  const telNumber = phone.replace(/[\s\-\(\)\+]/g, '');
+
   return (
-    <section className="relative min-h-screen flex items-center pt-20 overflow-hidden bg-white">
-      <div className="absolute inset-0 bg-neutral-50" />
-      <div className="absolute top-0 right-0 w-1/3 h-full bg-primary-50/50" />
+    <section className="relative min-h-[90vh] flex items-center pt-20 overflow-hidden">
+      {/* Subtle gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white via-primary-50/30 to-emerald-50/40" />
+      {/* Decorative accent */}
+      <div className="absolute top-20 right-0 w-[500px] h-[500px] bg-primary-100/30 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-emerald-100/20 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="container-custom relative z-10 py-12 lg:py-0">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
+      <div className="container-custom relative z-10 py-16 lg:py-0">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
-          <div className="animate-fade-up max-w-2xl py-10">
-            <h1 className="text-5xl lg:text-6xl font-display font-bold leading-tight text-neutral-900 mb-6">
-              Excellence in Healthcare, <br/>
+          <div className="animate-fade-up max-w-xl">
+            <div className="inline-flex items-center gap-2 bg-primary-50 border border-primary-100 rounded-full px-4 py-1.5 mb-6">
+              <span className="w-2 h-2 bg-primary-500 rounded-full animate-pulse" />
+              <span className="text-primary-700 text-xs font-semibold tracking-wide uppercase">Accepting New Patients</span>
+            </div>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-display font-bold leading-[1.1] text-neutral-900 mb-6">
+              Excellence in Healthcare,{' '}
               <span className="text-primary-700">Dedicated to You.</span>
             </h1>
-            <p className="text-lg text-neutral-600 mb-8 max-w-lg leading-relaxed">
+            <p className="text-base sm:text-lg text-neutral-600 mb-8 max-w-lg leading-relaxed">
               Experience world-class medical care with our team of expert physicians. We combine advanced medical
               technology with compassionate, personalized care to ensure your well-being.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 mb-4">
+            <div className="flex flex-col sm:flex-row gap-4 mb-10">
               <Link to="/dashboard/appointments" className="btn-primary btn-xl">
                 Book Appointment
               </Link>
-              <Link to="/doctors" className="btn-outline btn-xl">
-                Our Specialists
-              </Link>
+              {telNumber ? (
+                <a href={`tel:${telNumber}`} className="btn-outline btn-xl">
+                  Call Us Now
+                </a>
+              ) : (
+                <Link to="/contact" className="btn-outline btn-xl">
+                  Contact Us
+                </Link>
+              )}
+            </div>
+            {/* Trust indicators */}
+            <div className="flex flex-wrap items-center gap-6 text-sm text-neutral-500">
+              <div className="flex items-center gap-2">
+                <Shield size={16} className="text-primary-500" />
+                <span>HIPAA Compliant</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle size={16} className="text-primary-500" />
+                <span>Board Certified Doctors</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock size={16} className="text-primary-500" />
+                <span>Same-Day Appointments</span>
+              </div>
             </div>
           </div>
 
-          <div className="hidden lg:flex relative h-[500px] items-center justify-center">
-            <img
-              src="/logo.png"
-              alt="VerdantCare Medical Center Logo"
-              className="w-full max-w-md object-contain drop-shadow-xl"
-            />
+          {/* Right side - decorative card with stats */}
+          <div className="hidden lg:flex relative justify-center">
+            <div className="relative w-full max-w-md">
+              {/* Main card */}
+              <div className="bg-white rounded-3xl shadow-2xl border border-neutral-100 p-8 relative z-10">
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="w-14 h-14 bg-primary-50 rounded-2xl flex items-center justify-center">
+                    <Stethoscope size={28} className="text-primary-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-display font-bold text-neutral-900 text-lg">Trusted Care</h3>
+                    <p className="text-neutral-500 text-sm">Since 2010</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <p className="text-3xl font-display font-bold text-primary-700">25+</p>
+                    <p className="text-neutral-500 text-sm mt-1">Expert Doctors</p>
+                  </div>
+                  <div>
+                    <p className="text-3xl font-display font-bold text-primary-700">10k+</p>
+                    <p className="text-neutral-500 text-sm mt-1">Happy Patients</p>
+                  </div>
+                  <div>
+                    <p className="text-3xl font-display font-bold text-primary-700">15+</p>
+                    <p className="text-neutral-500 text-sm mt-1">Specialties</p>
+                  </div>
+                  <div>
+                    <p className="text-3xl font-display font-bold text-primary-700">4.9</p>
+                    <p className="text-neutral-500 text-sm mt-1">Patient Rating</p>
+                  </div>
+                </div>
+              </div>
+              {/* Floating accent card */}
+              <div className="absolute -bottom-4 -right-4 bg-primary-600 rounded-2xl px-5 py-3 shadow-lg z-20">
+                <div className="flex items-center gap-2 text-white">
+                  <Star size={16} className="fill-yellow-400 text-yellow-400" />
+                  <span className="font-semibold text-sm">Top Rated Clinic</span>
+                </div>
+              </div>
+            </div>
           </div>
 
         </div>
@@ -423,6 +498,18 @@ function TestimonialsSection() {
 
 // ─── CTA ─────────────────────────────────────────────────────────────────────
 const CTASection = memo(function CTASection() {
+  const [phone, setPhone] = useState('');
+
+  useEffect(() => {
+    import('../../api/generalAPI').then(({ settingsAPI }) => {
+      settingsAPI.getPublic()
+        .then(res => setPhone(res.data.data?.phone || ''))
+        .catch(() => {});
+    });
+  }, []);
+
+  const telNumber = phone.replace(/[\s\-\(\)\+]/g, '');
+
   return (
     <section className="relative py-24 bg-forest-gradient overflow-hidden">
       <div className="absolute inset-0 bg-dark-mesh opacity-30"></div>
@@ -437,9 +524,15 @@ const CTASection = memo(function CTASection() {
           <Link to="/dashboard/appointments" className="btn-primary-dark btn-xl border border-white/10">
             Book Appointment
           </Link>
-          <a href="tel:+1234567890" className="btn-outline-white btn-xl bg-white/5 backdrop-blur-sm">
-            Call Us Now
-          </a>
+          {telNumber ? (
+            <a href={`tel:${telNumber}`} className="btn-outline-white btn-xl bg-white/5 backdrop-blur-sm">
+              Call Us Now
+            </a>
+          ) : (
+            <Link to="/contact" className="btn-outline-white btn-xl bg-white/5 backdrop-blur-sm">
+              Contact Us
+            </Link>
+          )}
         </div>
         <p className="mt-8 text-sm text-primary-200/60 font-medium tracking-wide uppercase">
           No credit card required • Secure patient portal • 24/7 Support
