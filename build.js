@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Build script for Render deployment
-// Installs all dependencies and builds the client
+// Installs dependencies and builds the client
 
 const { execSync } = require('child_process');
 const path = require('path');
@@ -12,11 +12,8 @@ function run(cmd, cwd) {
   execSync(cmd, { cwd: cwd || ROOT, stdio: 'inherit' });
 }
 
-console.log('=== Installing root dependencies ===');
-run('npm install');
-
-console.log('\n=== Installing server dependencies ===');
-run('npm install', path.join(ROOT, 'server'));
+console.log('=== Installing server dependencies ===');
+run('npm install --omit=dev', path.join(ROOT, 'server'));
 
 console.log('\n=== Installing client dependencies ===');
 run('npm install --include=dev', path.join(ROOT, 'client'));
