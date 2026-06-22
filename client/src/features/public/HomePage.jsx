@@ -27,7 +27,7 @@ const HeroSection = memo(function HeroSection() {
       <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-emerald-100/20 rounded-full blur-3xl pointer-events-none" />
 
       <div className="container-custom relative z-10 py-16 lg:py-0">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+        <div className="max-w-2xl">
 
           <div className="animate-fade-up max-w-xl">
             <div className="inline-flex items-center gap-2 bg-primary-50 border border-primary-100 rounded-full px-4 py-1.5 mb-6">
@@ -69,49 +69,6 @@ const HeroSection = memo(function HeroSection() {
               <div className="flex items-center gap-2">
                 <Clock size={16} className="text-primary-500" />
                 <span>Same-Day Appointments</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Right side - decorative card with stats */}
-          <div className="hidden lg:flex relative justify-center">
-            <div className="relative w-full max-w-md">
-              {/* Main card */}
-              <div className="rounded-3xl p-8 relative z-10">
-                <div className="flex items-center gap-4 mb-8">
-                  <div className="w-14 h-14 bg-primary-50 rounded-2xl flex items-center justify-center">
-                    <Stethoscope size={28} className="text-primary-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-display font-bold text-neutral-900 text-lg">Trusted Care</h3>
-                    <p className="text-neutral-500 text-sm">Since 2010</p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <p className="text-3xl font-display font-bold text-primary-700">25+</p>
-                    <p className="text-neutral-500 text-sm mt-1">Expert Doctors</p>
-                  </div>
-                  <div>
-                    <p className="text-3xl font-display font-bold text-primary-700">10k+</p>
-                    <p className="text-neutral-500 text-sm mt-1">Happy Patients</p>
-                  </div>
-                  <div>
-                    <p className="text-3xl font-display font-bold text-primary-700">15+</p>
-                    <p className="text-neutral-500 text-sm mt-1">Specialties</p>
-                  </div>
-                  <div>
-                    <p className="text-3xl font-display font-bold text-primary-700">4.9</p>
-                    <p className="text-neutral-500 text-sm mt-1">Patient Rating</p>
-                  </div>
-                </div>
-              </div>
-              {/* Floating accent card */}
-              <div className="absolute -bottom-4 -right-4 bg-primary-600 rounded-2xl px-5 py-3 shadow-lg z-20">
-                <div className="flex items-center gap-2 text-white">
-                  <Star size={16} className="fill-yellow-400 text-yellow-400" />
-                  <span className="font-semibold text-sm">Top Rated Clinic</span>
-                </div>
               </div>
             </div>
           </div>
