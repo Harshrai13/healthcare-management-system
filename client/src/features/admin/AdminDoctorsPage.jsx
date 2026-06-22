@@ -389,7 +389,19 @@ export default function AdminDoctorsPage() {
                       </div>
                     ) : (
                       <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                        <p className="text-xs text-amber-700">Password was set before credentials tracking was added. The doctor can reset their password from their profile.</p>
+                        <p className="text-xs text-amber-700 mb-2">No stored password for this doctor. Click below to generate a new one.</p>
+                        <button
+                          onClick={async () => {
+                            try {
+                              const { data } = await adminAPI.resetDoctorPassword(viewCredDoctor);
+                              queryClient.invalidateQueries({ queryKey: ['doctorCredentials', viewCredDoctor] });
+                              toast.success('Password reset successfully');
+                            } catch { toast.error('Failed to reset password'); }
+                          }}
+                          className="btn-primary text-xs px-3 py-1.5"
+                        >
+                          <Key size={14} className="mr-1" /> Reset Password
+                        </button>
                       </div>
                     )}
                   </div>

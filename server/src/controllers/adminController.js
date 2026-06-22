@@ -199,4 +199,30 @@ async function getDoctorCredentials(req, res, next) {
   } catch (error) { next(error); }
 }
 
-module.exports = { getDashboard, getAnalytics, getUsers, updateUserRole, getAuditLogs, loginAsUser, searchUsers, createDoctor, getDoctorCredentials };
+async function resetDoctorPassword(req, res, next) {
+  try {
+    const user = await User.findById(req.params.id).select('email firstName lastName role');
+    if (!user) throw new AppError('User not found.', 404, ErrorCodes.NOT_FOUND);
+    if (user.role !== 'DOCTOR') throw new AppError('Password reset only available for doctor accounts.', 400, ErrorCodes.VALIDATION_ERROR);
+
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    let tempPassword = '';
+    for (let i = 0; i < 10; i++) tempPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+
+    const bcrypt = require('bcryptjs');
+    user.passwordHash = await bcrypt.hash(tempPassword, 12);
+    user.plainPassword = tempPassword;
+    await user.save();
+
+    res.json({
+      success: true,
+      data: {
+        email: user.email,
+        name: `${user.firstName} ${user.lastName}`.trim(),
+        password: tempPassword,
+      },
+    });
+  } catch (error) { next(error); }
+}
+
+module.exports = { getDashboard, getAnalytics, getUsers, updateUserRole, getAuditLogs, loginAsUser, searchUsers, createDoctor, getDoctorCredentials, resetDoctorPassword };

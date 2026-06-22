@@ -14,6 +14,7 @@ router.get('/users', authorize('SUPER_ADMIN', 'RECEPTIONIST'), adminController.g
 router.get('/users/search', authorize('SUPER_ADMIN'), adminController.searchUsers);
 router.post('/doctors', authorize('SUPER_ADMIN'), upload.single('photo'), adminController.createDoctor);
 router.get('/doctors/:id/credentials', authorize('SUPER_ADMIN'), adminController.getDoctorCredentials);
+router.post('/doctors/:id/reset-password', authorize('SUPER_ADMIN'), adminController.resetDoctorPassword);
 router.put('/users/:id/role', authorize('SUPER_ADMIN'), adminController.updateUserRole);
 router.post('/login-as/:userId', authorize('SUPER_ADMIN'), adminController.loginAsUser);
 router.get('/audit-logs', authorize('SUPER_ADMIN'), adminController.getAuditLogs);
