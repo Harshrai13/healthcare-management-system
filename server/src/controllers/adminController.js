@@ -112,6 +112,8 @@ async function getAuditLogs(req, res, next) {
 async function createDoctor(req, res, next) {
   try {
     const { firstName, lastName, email, specialty, experience } = req.body;
+    logger.info('createDoctor called', { firstName, lastName, email, specialty, experience, hasFile: !!req.file });
+
     if (!firstName || !lastName || !email) {
       throw new AppError('First name, last name and email are required.', 400, ErrorCodes.VALIDATION_ERROR);
     }
@@ -119,7 +121,7 @@ async function createDoctor(req, res, next) {
     if (existingUser) {
       throw new AppError('A user with this email already exists.', 400, ErrorCodes.VALIDATION_ERROR);
     }
-    // Generate a temporary password
+    // Generate a password
     const tempPassword = crypto.randomBytes(8).toString('hex');
     const passwordHash = await bcrypt.hash(tempPassword, 12);
 
@@ -129,6 +131,7 @@ async function createDoctor(req, res, next) {
       try {
         const result = await uploadToCloudinary(req.file.buffer, 'doctors', 'image');
         avatar = result.url;
+        logger.info('Doctor photo uploaded', { url: avatar });
       } catch (uploadErr) {
         logger.warn('Doctor photo upload failed, continuing without photo:', uploadErr.message);
       }
@@ -144,6 +147,7 @@ async function createDoctor(req, res, next) {
       isVerified: true,
       avatar,
     });
+    logger.info('User created', { userId: user._id, email: user.email });
 
     const doctorProfile = await DoctorProfile.create({
       userId: user._id,
@@ -152,8 +156,8 @@ async function createDoctor(req, res, next) {
       consultationModes: ['IN_PERSON', 'VIDEO'],
       isAvailable: true,
     });
+    logger.info('DoctorProfile created', { doctorProfileId: doctorProfile._id });
 
-    logger.info('Doctor created by admin', { adminId: req.user.id, doctorId: user._id });
     await AuditLog.create({
       userId: req.user.id,
       action: 'CREATE_DOCTOR',
@@ -165,14 +169,17 @@ async function createDoctor(req, res, next) {
 
     res.status(201).json({
       success: true,
-      message: 'Doctor added successfully. Temporary password: ' + tempPassword,
+      message: 'Doctor added successfully.',
       data: {
         user: { _id: user._id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role, avatar: user.avatar },
         doctorProfile,
-        tempPassword,
+        password: tempPassword,
       },
     });
-  } catch (error) { next(error); }
+  } catch (error) {
+    logger.error('createDoctor failed', { error: error.message, stack: error.stack });
+    next(error);
+  }
 }
 
 module.exports = { getDashboard, getAnalytics, getUsers, updateUserRole, getAuditLogs, loginAsUser, searchUsers, createDoctor };
