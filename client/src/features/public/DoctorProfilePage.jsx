@@ -103,14 +103,20 @@ function DoctorProfilePage() {
                   <Calendar size={18} /> Book Appointment
                 </Link>
                 {modes.includes('VIDEO') && (
-                  <span className="bg-purple-500/20 text-purple-200 border border-purple-500/30 font-medium px-4 py-3 rounded-xl inline-flex items-center gap-2">
+                  <Link
+                    to={`/appointments/book?doctorId=${doctor._id}&type=VIDEO`}
+                    className="bg-purple-500/20 text-purple-200 border border-purple-500/30 font-medium px-4 py-3 rounded-xl inline-flex items-center gap-2 hover:bg-purple-500/30 transition-colors"
+                  >
                     <Video size={18} /> Video Consultation
-                  </span>
+                  </Link>
                 )}
                 {modes.includes('IN_PERSON') && (
-                  <span className="bg-blue-500/20 text-blue-200 border border-blue-500/30 font-medium px-4 py-3 rounded-xl inline-flex items-center gap-2">
+                  <Link
+                    to={`/appointments/book?doctorId=${doctor._id}&type=IN_PERSON`}
+                    className="bg-blue-500/20 text-blue-200 border border-blue-500/30 font-medium px-4 py-3 rounded-xl inline-flex items-center gap-2 hover:bg-blue-500/30 transition-colors"
+                  >
                     <Building size={18} /> In-Person
-                  </span>
+                  </Link>
                 )}
               </div>
             </div>

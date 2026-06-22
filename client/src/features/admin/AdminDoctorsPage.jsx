@@ -394,7 +394,8 @@ export default function AdminDoctorsPage() {
                           onClick={async () => {
                             try {
                               const { data } = await adminAPI.resetDoctorPassword(viewCredDoctor);
-                              queryClient.invalidateQueries({ queryKey: ['doctorCredentials', viewCredDoctor] });
+                              // Directly update the cache with new credentials
+                              queryClient.setQueryData(['doctorCredentials', viewCredDoctor], data.data);
                               toast.success('Password reset successfully');
                             } catch { toast.error('Failed to reset password'); }
                           }}
