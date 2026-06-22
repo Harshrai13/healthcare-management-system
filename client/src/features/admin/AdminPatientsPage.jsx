@@ -1,11 +1,18 @@
-import { useMemo, useState } from 'react';
-import { Search, Filter, MoreVertical } from 'lucide-react';
+import { useMemo, useState, useEffect } from 'react';
+import { Search, Filter, MoreVertical, Eye } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { adminAPI } from '../../api/generalAPI';
 import LoadingSpinner from '../../components/LoadingSpinner';
 
 export default function AdminPatientsPage() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [openMenuId, setOpenMenuId] = useState(null);
+
+  useEffect(() => {
+    const handleClick = () => setOpenMenuId(null);
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, []);
 
   const { data: patients = [], isLoading } = useQuery({
     queryKey: ['admin_patients'],
@@ -110,8 +117,26 @@ export default function AdminPatientsPage() {
                       }
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button className="text-primary-600 font-semibold text-sm mr-4 hover:text-primary-700">View</button>
-                      <button className="text-neutral-400 hover:text-neutral-900"><MoreVertical size={20} /></button>
+                      <a href={`/dashboard`} className="text-primary-600 font-semibold text-sm mr-4 hover:text-primary-700">View</a>
+                      <div className="relative inline-block">
+                        <button
+                          className="text-neutral-400 hover:text-neutral-900"
+                          onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === patient._id ? null : patient._id); }}
+                        >
+                          <MoreVertical size={20} />
+                        </button>
+                        {openMenuId === patient._id && (
+                          <div className="absolute right-0 top-8 w-36 bg-white rounded-xl shadow-lg border border-neutral-100 py-1 z-30">
+                            <a
+                              href={`/dashboard`}
+                              className="flex items-center gap-2 px-4 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
+                              onClick={() => setOpenMenuId(null)}
+                            >
+                              <Eye size={16} /> View Dashboard
+                            </a>
+                          </div>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );

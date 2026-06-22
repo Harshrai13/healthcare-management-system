@@ -1,6 +1,6 @@
-import { useMemo, useState, useRef } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Star, MoreVertical, CheckCircle, XCircle, Clock, Upload, X } from 'lucide-react';
+import { Plus, Search, Star, MoreVertical, CheckCircle, XCircle, Clock, Upload, X, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { doctorsAPI, servicesAPI } from '../../api/doctorsAPI';
 import { adminAPI } from '../../api/generalAPI';
@@ -11,8 +11,16 @@ export default function AdminDoctorsPage() {
   const [formData, setFormData] = useState({ firstName: '', lastName: '', email: '', specialty: '', experience: '' });
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
+  const [openMenuId, setOpenMenuId] = useState(null);
   const fileInputRef = useRef(null);
   const queryClient = useQueryClient();
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClick = () => setOpenMenuId(null);
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, []);
 
   const { data: doctors = [], isLoading } = useQuery({
     queryKey: ['admin_doctors'],
@@ -130,9 +138,27 @@ export default function AdminDoctorsPage() {
                       {getInitials(docName)}
                     </div>
                   )}
-                  <button className="p-1.5 text-neutral-400 hover:bg-neutral-50 rounded-lg">
-                    <MoreVertical size={20} />
-                  </button>
+                  <div className="relative">
+                    <button
+                      className="p-1.5 text-neutral-400 hover:bg-neutral-50 rounded-lg"
+                      onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === (doc._id || doc.id) ? null : (doc._id || doc.id)); }}
+                    >
+                      <MoreVertical size={20} />
+                    </button>
+                    {openMenuId === (doc._id || doc.id) && (
+                      <div className="absolute right-0 top-8 w-40 bg-white rounded-xl shadow-lg border border-neutral-100 py-1 z-30">
+                        <a
+                          href={`/doctors/${doc._id || doc.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 px-4 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
+                          onClick={() => setOpenMenuId(null)}
+                        >
+                          <Eye size={16} /> View Profile
+                        </a>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <h3 className="text-lg font-bold text-neutral-900">{docName}</h3>
@@ -163,7 +189,7 @@ export default function AdminDoctorsPage() {
                   ) : (
                     <span className="flex items-center gap-1 text-xs font-bold text-red-600"><XCircle size={14} /> Inactive</span>
                   )}
-                  <button className="text-sm font-semibold text-primary-600 hover:text-primary-700">View Profile</button>
+                  <a href={`/doctors/${doc._id || doc.id}`} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-primary-600 hover:text-primary-700">View Profile</a>
                 </div>
               </div>
             );
