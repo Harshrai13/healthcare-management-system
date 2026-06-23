@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Save, Bell, Shield, Globe, CreditCard, Layout, Upload, Phone, Mail, MapPin, Clock, Share2 } from 'lucide-react';
+import { Save, Bell, Shield, Globe, CreditCard, Layout, Upload, Phone, Mail, MapPin, Clock, Share2, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { settingsAPI } from '../../api/generalAPI';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -36,6 +36,21 @@ export default function AdminSettingsPage() {
     ipWhitelist: false,
     paymentGateway: 'razorpay',
     invoiceDuePeriod: '14 days',
+    // Razorpay
+    razorpayKeyId: '',
+    razorpayKeySecret: '',
+    razorpayWebhookSecret: '',
+    razorpayEnabled: false,
+    // Stripe
+    stripePublishableKey: '',
+    stripeSecretKey: '',
+    stripeWebhookSecret: '',
+    stripeEnabled: false,
+    // UI state for masking
+    showRazorpaySecret: false,
+    showRazorpayWebhook: false,
+    showStripeSecret: false,
+    showStripeWebhook: false,
   });
 
   const fileInputRef = useRef(null);
@@ -499,12 +514,163 @@ export default function AdminSettingsPage() {
 
           {activeSection === 'Payment Gateway' && (
             <div className="bg-white rounded-3xl p-8 border border-neutral-100 shadow-sm">
-              <h2 className="text-xl font-bold text-neutral-900 mb-6 border-b border-neutral-100 pb-4">Payment Gateway</h2>
-              <div className="space-y-6">
-                <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-3">
-                  <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
-                  <p className="text-sm font-medium text-emerald-800">Razorpay is configured and active</p>
+              <h2 className="text-xl font-bold text-neutral-900 mb-6 border-b border-neutral-100 pb-4">Payment Gateway Configuration</h2>
+              <p className="text-sm text-neutral-500 mb-6">Configure API keys for payment processors. Keys are stored securely and used for processing payments.</p>
+
+              {/* Razorpay Configuration */}
+              <div className="mb-8 p-5 border border-neutral-200 rounded-2xl">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                      <CreditCard size={20} className="text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-neutral-900">Razorpay</h3>
+                      <p className="text-xs text-neutral-500">UPI, Cards, Net Banking, Wallets</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${settings.razorpayEnabled ? 'bg-emerald-100 text-emerald-700' : 'bg-neutral-100 text-neutral-500'}`}>
+                      {settings.razorpayEnabled ? 'Active' : 'Inactive'}
+                    </span>
+                    <button
+                      onClick={() => handleChange('razorpayEnabled', !settings.razorpayEnabled)}
+                      className={`w-10 h-6 rounded-full flex items-center p-1 cursor-pointer transition-colors ${settings.razorpayEnabled ? 'bg-emerald-500' : 'bg-neutral-300'}`}
+                    >
+                      <div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${settings.razorpayEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
+                    </button>
+                  </div>
                 </div>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs font-medium text-neutral-600 mb-1 block">Key ID</label>
+                    <input
+                      type="text"
+                      value={settings.razorpayKeyId}
+                      onChange={(e) => handleChange('razorpayKeyId', e.target.value)}
+                      placeholder="rzp_live_xxxxxxxxxxxx"
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary-100 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-neutral-600 mb-1 block">Key Secret</label>
+                    <div className="relative">
+                      <input
+                        type={settings.showRazorpaySecret ? 'text' : 'password'}
+                        value={settings.razorpayKeySecret}
+                        onChange={(e) => handleChange('razorpayKeySecret', e.target.value)}
+                        placeholder="••••••••••••"
+                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-2.5 pr-10 text-sm focus:ring-2 focus:ring-primary-100 outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleChange('showRazorpaySecret', !settings.showRazorpaySecret)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+                      >
+                        {settings.showRazorpaySecret ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-neutral-600 mb-1 block">Webhook Secret</label>
+                    <div className="relative">
+                      <input
+                        type={settings.showRazorpayWebhook ? 'text' : 'password'}
+                        value={settings.razorpayWebhookSecret}
+                        onChange={(e) => handleChange('razorpayWebhookSecret', e.target.value)}
+                        placeholder="••••••••••••"
+                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-2.5 pr-10 text-sm focus:ring-2 focus:ring-primary-100 outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleChange('showRazorpayWebhook', !settings.showRazorpayWebhook)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+                      >
+                        {settings.showRazorpayWebhook ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Stripe Configuration */}
+              <div className="mb-8 p-5 border border-neutral-200 rounded-2xl">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
+                      <CreditCard size={20} className="text-indigo-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-neutral-900">Stripe</h3>
+                      <p className="text-xs text-neutral-500">International cards & digital wallets</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${settings.stripeEnabled ? 'bg-emerald-100 text-emerald-700' : 'bg-neutral-100 text-neutral-500'}`}>
+                      {settings.stripeEnabled ? 'Active' : 'Inactive'}
+                    </span>
+                    <button
+                      onClick={() => handleChange('stripeEnabled', !settings.stripeEnabled)}
+                      className={`w-10 h-6 rounded-full flex items-center p-1 cursor-pointer transition-colors ${settings.stripeEnabled ? 'bg-emerald-500' : 'bg-neutral-300'}`}
+                    >
+                      <div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${settings.stripeEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
+                    </button>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs font-medium text-neutral-600 mb-1 block">Publishable Key</label>
+                    <input
+                      type="text"
+                      value={settings.stripePublishableKey}
+                      onChange={(e) => handleChange('stripePublishableKey', e.target.value)}
+                      placeholder="pk_live_xxxxxxxxxxxx"
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary-100 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-neutral-600 mb-1 block">Secret Key</label>
+                    <div className="relative">
+                      <input
+                        type={settings.showStripeSecret ? 'text' : 'password'}
+                        value={settings.stripeSecretKey}
+                        onChange={(e) => handleChange('stripeSecretKey', e.target.value)}
+                        placeholder="••••••••••••"
+                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-2.5 pr-10 text-sm focus:ring-2 focus:ring-primary-100 outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleChange('showStripeSecret', !settings.showStripeSecret)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+                      >
+                        {settings.showStripeSecret ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-neutral-600 mb-1 block">Webhook Secret</label>
+                    <div className="relative">
+                      <input
+                        type={settings.showStripeWebhook ? 'text' : 'password'}
+                        value={settings.stripeWebhookSecret}
+                        onChange={(e) => handleChange('stripeWebhookSecret', e.target.value)}
+                        placeholder="••••••••••••"
+                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-2.5 pr-10 text-sm focus:ring-2 focus:ring-primary-100 outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleChange('showStripeWebhook', !settings.showStripeWebhook)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+                      >
+                        {settings.showStripeWebhook ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* General Payment Settings */}
+              <div className="grid md:grid-cols-2 gap-4 mb-6">
                 <div>
                   <label className="block text-sm font-bold text-neutral-700 mb-2">Default Currency</label>
                   <select value={settings.currency} onChange={(e) => handleChange('currency', e.target.value)} className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary-100 outline-none">
@@ -522,11 +688,12 @@ export default function AdminSettingsPage() {
                     <option value="30 days">30 days</option>
                   </select>
                 </div>
-                <div className="pt-6">
-                  <button onClick={handleSave} disabled={saveMutation.isPending} className="btn-primary flex items-center gap-2 disabled:opacity-50">
-                    <Save size={18} /> {saveMutation.isPending ? 'Saving...' : 'Save Changes'}
-                  </button>
-                </div>
+              </div>
+
+              <div className="pt-4">
+                <button onClick={handleSave} disabled={saveMutation.isPending} className="btn-primary flex items-center gap-2 disabled:opacity-50">
+                  <Save size={18} /> {saveMutation.isPending ? 'Saving...' : 'Save Changes'}
+                </button>
               </div>
             </div>
           )}

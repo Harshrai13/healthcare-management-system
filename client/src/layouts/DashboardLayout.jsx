@@ -34,6 +34,7 @@ function DashboardLayout() {
         { name: 'Schedule', path: '/doctor/schedule', icon: Calendar },
         { name: 'My Patients', path: '/doctor/patients', icon: Users },
         { name: 'Consultations', path: '/doctor/consultations', icon: Activity },
+        { name: 'Billing', path: '/doctor/billing', icon: CreditCard },
         { name: 'Profile', path: '/doctor/profile', icon: User },
       ];
     }

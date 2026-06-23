@@ -2,6 +2,7 @@ import api from './axios';
 
 export const invoicesAPI = {
   getAll: (params) => api.get('/invoices', { params }),
+  getDoctorInvoices: (params) => api.get('/invoices/doctor/my', { params }),
   getById: (id) => api.get(`/invoices/${id}`),
   create: (data) => api.post('/invoices', data),
   update: (id, data) => api.put(`/invoices/${id}`, data),
@@ -81,6 +82,7 @@ export const insuranceAPI = {
 export const settingsAPI = {
   get: () => api.get('/settings'),
   getPublic: () => api.get('/settings/public'),
+  getPaymentConfig: () => api.get('/settings/payment-config'),
   update: (data) => api.put('/settings', data),
   uploadLogo: (formData) => api.post('/settings/logo', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
 };

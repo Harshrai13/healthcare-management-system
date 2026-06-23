@@ -67,6 +67,8 @@ async function updateSettings(req, res, next) {
       'timezone', 'currency', 'language', 'twoFactorEnabled', 'sessionTimeout',
       'ipWhitelist', 'notificationPrefs', 'paymentGateway',
       'invoiceDuePeriod', 'logoUrl',
+      'razorpayKeyId', 'razorpayKeySecret', 'razorpayWebhookSecret', 'razorpayEnabled',
+      'stripePublishableKey', 'stripeSecretKey', 'stripeWebhookSecret', 'stripeEnabled',
     ];
 
     allowedFields.forEach((field) => {
@@ -120,4 +122,34 @@ async function uploadLogo(req, res, next) {
   } catch (error) { next(error); }
 }
 
-module.exports = { getSettings, getPublicSettings, updateSettings, uploadLogo };
+module.exports = { getSettings, getPublicSettings, updateSettings, uploadLogo, getPaymentConfig };
+
+async function getPaymentConfig(req, res, next) {
+  try {
+    let settings = await Settings.findOne();
+    if (!settings) settings = await Settings.create({});
+
+    const maskSecret = (val) => {
+      if (!val || val.length <= 4) return '****';
+      return '****' + val.slice(-4);
+    };
+
+    res.json({
+      success: true,
+      data: {
+        razorpay: {
+          enabled: settings.razorpayEnabled || false,
+          keyId: settings.razorpayKeyId || '',
+          keySecret: maskSecret(settings.razorpayKeySecret),
+          webhookSecret: maskSecret(settings.razorpayWebhookSecret),
+        },
+        stripe: {
+          enabled: settings.stripeEnabled || false,
+          publishableKey: settings.stripePublishableKey || '',
+          secretKey: maskSecret(settings.stripeSecretKey),
+          webhookSecret: maskSecret(settings.stripeWebhookSecret),
+        },
+      },
+    });
+  } catch (error) { next(error); }
+}

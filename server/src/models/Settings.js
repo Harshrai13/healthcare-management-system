@@ -38,6 +38,16 @@ const settingsSchema = new mongoose.Schema(
     paymentGateway: { type: String, default: 'razorpay' },
     invoiceDuePeriod: { type: String, default: '14 days' },
     logoUrl: { type: String },
+    // Razorpay payment gateway
+    razorpayKeyId: { type: String, default: '' },
+    razorpayKeySecret: { type: String, default: '' },
+    razorpayWebhookSecret: { type: String, default: '' },
+    razorpayEnabled: { type: Boolean, default: false },
+    // Stripe payment gateway
+    stripePublishableKey: { type: String, default: '' },
+    stripeSecretKey: { type: String, default: '' },
+    stripeWebhookSecret: { type: String, default: '' },
+    stripeEnabled: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

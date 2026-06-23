@@ -4,11 +4,12 @@ const { authenticate, authorize } = require('../middleware/auth');
 const invoiceController = require('../controllers/invoiceController');
 
 router.get('/', authenticate, invoiceController.getInvoices);
+router.get('/doctor/my', authenticate, authorize('DOCTOR'), invoiceController.getDoctorInvoices);
 router.get('/payments/history', authenticate, invoiceController.getPaymentHistory);
 router.get('/:id', authenticate, invoiceController.getInvoiceById);
 router.get('/:id/pdf', authenticate, invoiceController.downloadInvoicePDF);
 router.get('/receipt/:id/pdf', authenticate, invoiceController.downloadReceiptPDF);
-router.post('/', authenticate, authorize('BILLING_STAFF', 'SUPER_ADMIN'), invoiceController.createInvoice);
+router.post('/', authenticate, authorize('DOCTOR', 'BILLING_STAFF', 'SUPER_ADMIN'), invoiceController.createInvoice);
 router.put('/:id', authenticate, authorize('BILLING_STAFF', 'SUPER_ADMIN'), invoiceController.updateInvoice);
 router.delete('/:id', authenticate, authorize('BILLING_STAFF', 'SUPER_ADMIN'), invoiceController.deleteInvoice);
 router.post('/:id/payment-intent', authenticate, invoiceController.createPaymentIntent);

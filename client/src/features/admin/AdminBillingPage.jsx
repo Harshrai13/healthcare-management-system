@@ -2,12 +2,13 @@ import { useState, useMemo } from 'react';
 import {
   DollarSign, FileText, ArrowUpRight, ArrowDownRight, CreditCard,
   Search, Filter, Download, Eye, Edit2, Trash2, X, Plus, Send,
-  TrendingUp, Clock, AlertCircle, CheckCircle,
+  TrendingUp, Clock, AlertCircle, CheckCircle, Wallet,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { invoicesAPI } from '../../api/generalAPI';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import toast from 'react-hot-toast';
 
 const COLORS = ['#059669', '#F59E0B', '#EF4444', '#6B7280'];
 
@@ -373,6 +374,15 @@ export default function AdminBillingPage() {
                       </button>
                       {inv.status !== 'PAID' && (
                         <button
+                          onClick={() => setShowRecordPaymentModal(inv)}
+                          className="p-1.5 text-neutral-400 hover:text-emerald-600 transition-colors"
+                          title="Record Payment"
+                        >
+                          <Wallet size={16} />
+                        </button>
+                      )}
+                      {inv.status !== 'PAID' && (
+                        <button
                           onClick={() => handleDelete(inv._id)}
                           className="p-1.5 text-neutral-400 hover:text-red-600 transition-colors"
                           title="Cancel"
@@ -422,6 +432,18 @@ export default function AdminBillingPage() {
           onSuccess={() => {
             setShowEditModal(false);
             setEditingInvoice(null);
+            queryClient.invalidateQueries(['admin_invoices']);
+          }}
+        />
+      )}
+
+      {/* Record Payment Modal */}
+      {showRecordPaymentModal && (
+        <RecordPaymentModal
+          invoice={showRecordPaymentModal}
+          onClose={() => setShowRecordPaymentModal(null)}
+          onSuccess={() => {
+            setShowRecordPaymentModal(null);
             queryClient.invalidateQueries(['admin_invoices']);
           }}
         />
@@ -553,6 +575,132 @@ function EditInvoiceModal({ invoice, onClose, onSuccess }) {
           </button>
           <button onClick={handleUpdate} className="flex-1 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors font-medium">
             Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RecordPaymentModal({ invoice, onClose, onSuccess }) {
+  const [amount, setAmount] = useState(invoice.total || 0);
+  const [method, setMethod] = useState('CASH');
+  const [transactionId, setTransactionId] = useState('');
+  const [notes, setNotes] = useState('');
+
+  const formatCurrency = (amount) =>
+    new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount || 0);
+
+  const recordMutation = useMutation({
+    mutationFn: (data) => invoicesAPI.processPayment(invoice._id, data),
+    onSuccess: () => {
+      toast.success('Payment recorded successfully');
+      onSuccess();
+    },
+    onError: (err) => toast.error(err?.response?.data?.message || 'Failed to record payment'),
+  });
+
+  const handleSubmit = () => {
+    if (!amount || amount <= 0) return toast.error('Amount must be greater than 0');
+    recordMutation.mutate({
+      amount,
+      method,
+      transactionId: transactionId || undefined,
+      notes: notes || undefined,
+      gateway: 'manual',
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl max-w-md w-full">
+        <div className="flex items-center justify-between p-6 border-b border-neutral-100">
+          <div>
+            <h3 className="text-lg font-bold text-neutral-900">Record Payment</h3>
+            <p className="text-xs text-neutral-500 mt-0.5">Invoice #{invoice._id?.slice(-8).toUpperCase()}</p>
+          </div>
+          <button onClick={onClose} className="text-neutral-400 hover:text-neutral-600">
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-4">
+          <div className="p-3 bg-neutral-50 rounded-xl">
+            <div className="flex justify-between text-sm">
+              <span className="text-neutral-600">Patient:</span>
+              <span className="font-medium">
+                {invoice.patientId ? `${invoice.patientId.firstName} ${invoice.patientId.lastName}` : '-'}
+              </span>
+            </div>
+            <div className="flex justify-between text-sm mt-1">
+              <span className="text-neutral-600">Invoice Total:</span>
+              <span className="font-bold text-emerald-600">{formatCurrency(invoice.total)}</span>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-neutral-700 mb-2">Amount (₹)</label>
+            <input
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
+              min="0"
+              step="0.01"
+              className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-neutral-700 mb-2">Payment Method</label>
+            <select
+              value={method}
+              onChange={(e) => setMethod(e.target.value)}
+              className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none"
+            >
+              <option value="CASH">Cash</option>
+              <option value="CARD">Card</option>
+              <option value="UPI">UPI</option>
+              <option value="NET_BANKING">Net Banking</option>
+              <option value="WALLET">Wallet</option>
+              <option value="CHEQUE">Cheque</option>
+              <option value="BANK_TRANSFER">Bank Transfer</option>
+              <option value="ONLINE">Online Payment</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-neutral-700 mb-2">Transaction ID (optional)</label>
+            <input
+              type="text"
+              value={transactionId}
+              onChange={(e) => setTransactionId(e.target.value)}
+              placeholder="e.g., TXN123456"
+              className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-neutral-700 mb-2">Notes (optional)</label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={2}
+              placeholder="Any additional notes..."
+              className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none resize-none"
+            />
+          </div>
+        </div>
+
+        <div className="flex gap-3 p-6 border-t border-neutral-100">
+          <button onClick={onClose} className="flex-1 py-2.5 border border-neutral-200 text-neutral-700 rounded-xl hover:bg-neutral-50 font-medium">
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={recordMutation.isPending}
+            className="flex-1 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 font-medium disabled:opacity-50"
+          >
+            {recordMutation.isPending ? 'Recording...' : 'Record Payment'}
           </button>
         </div>
       </div>

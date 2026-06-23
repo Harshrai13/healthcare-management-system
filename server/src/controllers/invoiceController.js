@@ -78,12 +78,73 @@ async function getInvoiceById(req, res, next) {
 async function createInvoice(req, res, next) {
   try {
     const { patientId, appointmentId, items, subtotal, tax, total, dueDate } = req.body;
-    const invoice = await Invoice.create({ patientId, appointmentId, items, subtotal, tax, total, dueDate: new Date(dueDate), status: 'PENDING' });
+
+    // If doctor is creating, validate appointment belongs to their patients
+    if (req.user.role === 'DOCTOR') {
+      const DoctorProfile = require('../models/DoctorProfile');
+      const Appointment = require('../models/Appointment');
+      const doctorProfile = await DoctorProfile.findOne({ userId: req.user.id }).select('_id');
+      if (!doctorProfile) throw new AppError('Doctor profile not found.', 404, ErrorCodes.NOT_FOUND);
+      const appointment = await Appointment.findOne({ _id: appointmentId, doctorId: doctorProfile._id });
+      if (!appointment) throw new AppError('Appointment not found or does not belong to you.', 404, ErrorCodes.NOT_FOUND);
+    }
+
+    // Auto-calculate subtotal and total from items if not provided
+    let calcSubtotal = subtotal;
+    let calcTotal = total;
+    if (items && items.length > 0 && !calcSubtotal) {
+      calcSubtotal = items.reduce((sum, item) => sum + ((item.quantity || 1) * (item.rate || 0)), 0);
+    }
+    if (calcSubtotal !== undefined && calcTotal === undefined) {
+      calcTotal = calcSubtotal + (tax || 0);
+    }
+
+    const invoice = await Invoice.create({
+      patientId, appointmentId, items,
+      subtotal: calcSubtotal, tax: tax || 0, total: calcTotal,
+      dueDate: new Date(dueDate), status: 'PENDING',
+    });
     await invoice.populate({ path: 'patientId', select: 'firstName lastName email' });
     setImmediate(() => {
       notifyBillingReminder(invoice).catch((err) => logger.error('Notification error', { err: err.message }));
     });
     res.status(201).json({ success: true, message: 'Invoice created.', data: invoice });
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function getDoctorInvoices(req, res, next) {
+  try {
+    const DoctorProfile = require('../models/DoctorProfile');
+    const Appointment = require('../models');
+    const { page = 1, limit = 20 } = req.query;
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    const doctorProfile = await DoctorProfile.findOne({ userId: req.user.id }).select('_id');
+    if (!doctorProfile) throw new AppError('Doctor profile not found.', 404, ErrorCodes.NOT_FOUND);
+
+    // Get all appointment IDs for this doctor
+    const appointments = await Appointment.Appointment.find({ doctorId: doctorProfile._id }).select('_id');
+    const appointmentIds = appointments.map((a) => a._id);
+
+    const where = { appointmentId: { $in: appointmentIds } };
+
+    const [invoices, total] = await Promise.all([
+      Invoice.find(where)
+        .populate({ path: 'patientId', select: 'firstName lastName email' })
+        .populate({ path: 'appointmentId', populate: { path: 'serviceId', select: 'name' } })
+        .populate('payments')
+        .skip(skip).limit(limitNum).sort({ createdAt: -1 }),
+      Invoice.countDocuments(where),
+    ]);
+
+    res.json({
+      success: true,
+      data: { invoices, pagination: { page: pageNum, limit: limitNum, total, totalPages: Math.ceil(total / limitNum) } },
+    });
   } catch (error) {
     next(error);
   }
@@ -131,7 +192,7 @@ async function deleteInvoice(req, res, next) {
  */
 async function createPaymentIntent(req, res, next) {
   try {
-    const stripe = getStripe();
+    const stripe = await getStripe();
     if (!stripe) throw new AppError('Stripe payment processing is not configured. Please try Razorpay or contact support.', 503, ErrorCodes.SERVICE_UNAVAILABLE);
 
     const invoice = await Invoice.findById(req.params.id);
@@ -164,7 +225,7 @@ async function createPaymentIntent(req, res, next) {
  */
 async function createRazorpayOrder(req, res, next) {
   try {
-    const razorpay = getRazorpay();
+    const razorpay = await getRazorpay();
     if (!razorpay) throw new AppError('Razorpay is not configured. Please try Stripe or contact support.', 503, ErrorCodes.SERVICE_UNAVAILABLE);
 
     const invoice = await Invoice.findById(req.params.id);
@@ -257,7 +318,14 @@ async function verifyRazorpayPayment(req, res, next) {
  */
 async function razorpayWebhook(req, res, next) {
   try {
-    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    let webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      try {
+        const Settings = require('../models/Settings');
+        const settings = await Settings.findOne();
+        webhookSecret = settings?.razorpayWebhookSecret || '';
+      } catch (_) { /* ignore */ }
+    }
     if (!webhookSecret) return res.status(503).json({ error: 'Razorpay webhook not configured' });
 
     const signature = req.headers['x-razorpay-signature'];
@@ -321,7 +389,7 @@ async function processPayment(req, res, next) {
 
     // If Stripe paymentIntentId provided, verify it on Stripe side
     if (paymentIntentId) {
-      const stripe = getStripe();
+      const stripe = await getStripe();
       if (stripe) {
         const intent = await stripe.paymentIntents.retrieve(paymentIntentId);
         if (intent.status !== 'succeeded') {
@@ -360,11 +428,19 @@ async function processPayment(req, res, next) {
  */
 async function stripeWebhook(req, res, next) {
   try {
-    const stripe = getStripe();
+    const stripe = await getStripe();
     if (!stripe) return res.status(503).json({ error: 'Stripe not configured' });
 
     const sig = req.headers['stripe-signature'];
-    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    // Use env var first, fallback to DB settings
+    let endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!endpointSecret) {
+      try {
+        const Settings = require('../models/Settings');
+        const settings = await Settings.findOne();
+        endpointSecret = settings?.stripeWebhookSecret || '';
+      } catch (_) { /* ignore */ }
+    }
 
     let event;
     try {
@@ -481,6 +557,7 @@ async function downloadReceiptPDF(req, res, next) {
 
 module.exports = {
   getInvoices,
+  getDoctorInvoices,
   getInvoiceById,
   createInvoice,
   updateInvoice,

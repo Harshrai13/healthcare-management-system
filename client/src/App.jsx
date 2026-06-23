@@ -55,6 +55,7 @@ const SchedulePage = lazy(() => import('./features/doctor/SchedulePage'));
 const PatientsListPage = lazy(() => import('./features/doctor/PatientsListPage'));
 const ConsultationsPage = lazy(() => import('./features/doctor/ConsultationsPage'));
 const CreatePrescriptionPage = lazy(() => import('./features/doctor/CreatePrescriptionPage'));
+const DoctorBillingPage = lazy(() => import('./features/doctor/DoctorBillingPage'));
 
 // Admin pages
 const AdminDashboard = lazy(() => import('./features/admin/AdminDashboard'));
@@ -173,6 +174,7 @@ function App() {
           <Route path="schedule" element={<SchedulePage />} />
           <Route path="patients" element={<PatientsListPage />} />
           <Route path="consultations" element={<ConsultationsPage />} />
+          <Route path="billing" element={<DoctorBillingPage />} />
           <Route path="prescriptions/new" element={<CreatePrescriptionPage />} />
           <Route path="telehealth/:consultationId" element={<TelehealthPage />} />
         </Route>
