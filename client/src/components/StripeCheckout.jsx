@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, CheckCircle, XCircle, CreditCard, Download, RefreshCw } from 'lucide-react';
+import { X, CheckCircle, XCircle, CreditCard, Download, RefreshCw, Copy } from 'lucide-react';
 import { invoicesAPI, settingsAPI } from '../api/generalAPI';
 
 function loadStripeScript(publishableKey) {
@@ -30,6 +30,15 @@ export default function StripeCheckout({ invoice, onClose, onSuccess }) {
 
   const formatCurrency = (amount) =>
     new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount || 0);
+
+  const formatDateTime = (date) =>
+    new Date(date).toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
 
   useEffect(() => {
     let mounted = true;
@@ -142,51 +151,71 @@ export default function StripeCheckout({ invoice, onClose, onSuccess }) {
     }
   };
 
+  const handleCopyTransaction = () => {
+    if (paymentIntentId) {
+      navigator.clipboard.writeText(paymentIntentId);
+    }
+  };
+
   if (success) {
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle className="text-emerald-600" size={32} />
-          </div>
-          <h3 className="text-xl font-bold text-neutral-900 mb-2">Payment Successful!</h3>
-          <p className="text-neutral-600 mb-2">
-            Your payment of {formatCurrency(invoice.total)} has been processed via Stripe.
-          </p>
-          <div className="bg-neutral-50 rounded-xl p-3 mb-4 text-left space-y-1">
-            <div className="flex justify-between text-xs">
-              <span className="text-neutral-500">Invoice ID</span>
-              <span className="font-semibold text-neutral-900">
-                #{invoice._id?.slice(-8).toUpperCase()}
-              </span>
+      <div className="fixed inset-0 bg-emerald-600 flex flex-col z-50">
+        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+          <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mb-6">
+            <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center">
+              <CheckCircle className="text-emerald-600" size={32} />
             </div>
-            {paymentIntentId && (
+          </div>
+
+          <p className="text-emerald-100 text-sm mb-1">Payment Successful</p>
+          <h2 className="text-3xl font-bold text-white mb-6">{formatCurrency(invoice.total)}</h2>
+
+          <div className="bg-white rounded-2xl p-5 w-full max-w-sm text-left shadow-xl">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <p className="text-sm font-semibold text-neutral-900">VerdantCare Medical Center</p>
+                <p className="text-xs text-neutral-500">{formatDateTime(new Date())}</p>
+              </div>
+              <span className="text-sm font-bold text-neutral-900">{formatCurrency(invoice.total)}</span>
+            </div>
+
+            <div className="border-t border-neutral-100 pt-4 space-y-3">
+              <div className="flex justify-between text-xs">
+                <span className="text-neutral-500">Invoice ID</span>
+                <span className="font-semibold text-neutral-900">#{invoice._id?.slice(-8).toUpperCase()}</span>
+              </div>
               <div className="flex justify-between text-xs">
                 <span className="text-neutral-500">Transaction</span>
-                <span className="font-mono text-neutral-900">{paymentIntentId.slice(-12)}</span>
+                <button
+                  onClick={handleCopyTransaction}
+                  className="flex items-center gap-1 font-mono text-neutral-900 hover:text-emerald-600"
+                >
+                  {paymentIntentId.slice(-12)} <Copy size={12} />
+                </button>
               </div>
-            )}
-            <div className="flex justify-between text-xs">
-              <span className="text-neutral-500">Date</span>
-              <span className="font-semibold text-neutral-900">
-                {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-              </span>
+              <div className="flex justify-between text-xs">
+                <span className="text-neutral-500">Paid via</span>
+                <span className="font-semibold text-neutral-900">CARD</span>
+              </div>
             </div>
           </div>
-          <div className="flex gap-3">
-            <button
-              onClick={handleDownloadReceipt}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 border border-neutral-200 text-neutral-700 font-semibold rounded-xl hover:bg-neutral-50 transition-colors"
-            >
-              <Download size={16} /> Receipt
-            </button>
-            <button
-              onClick={onClose}
-              className="flex-1 px-6 py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition-colors"
-            >
-              Done
-            </button>
-          </div>
+
+          <p className="text-white/80 text-xs mt-6 font-medium">Secured by Stripe</p>
+        </div>
+
+        <div className="p-4 bg-emerald-700">
+          <button
+            onClick={handleDownloadReceipt}
+            className="w-full py-3 bg-white text-emerald-700 font-bold rounded-xl hover:bg-emerald-50 transition-colors"
+          >
+            View Receipt
+          </button>
+          <button
+            onClick={onClose}
+            className="w-full py-3 mt-2 text-white font-medium rounded-xl hover:bg-emerald-500/20 transition-colors"
+          >
+            Done
+          </button>
         </div>
       </div>
     );

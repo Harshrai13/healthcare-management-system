@@ -1,17 +1,48 @@
 import { useState } from 'react';
-import { X, CreditCard, Smartphone, CheckCircle, AlertTriangle } from 'lucide-react';
-import { invoicesAPI } from '../api/generalAPI';
+import { X, CreditCard, Smartphone, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { settingsAPI } from '../api/generalAPI';
 import RazorpayCheckout from './RazorpayCheckout';
 import StripeCheckout from './StripeCheckout';
 
 export default function PaymentCheckout({ invoice, onClose, onSuccess }) {
   const [method, setMethod] = useState(null);
-  const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '';
-  const hasRazorpay = !!import.meta.env.VITE_RAZORPAY_KEY_ID;
-  const hasAnyProvider = hasRazorpay || stripeKey;
+
+  const { data: paymentConfig, isLoading: configLoading } = useQuery({
+    queryKey: ['payment_config'],
+    queryFn: async () => {
+      const { data } = await settingsAPI.getPaymentConfig();
+      return data?.data || null;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const razorpay = paymentConfig?.razorpay || {};
+  const stripe = paymentConfig?.stripe || {};
+
+  const razorpayKeyId = razorpay.enabled ? razorpay.keyId : import.meta.env.VITE_RAZORPAY_KEY_ID;
+  const stripePublishableKey = stripe.enabled
+    ? stripe.publishableKey
+    : import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+
+  const hasRazorpay = !!razorpayKeyId;
+  const hasStripe = !!stripePublishableKey;
+  const hasAnyProvider = hasRazorpay || hasStripe;
 
   const formatCurrency = (amount) =>
     new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount || 0);
+
+  if (configLoading) {
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center">
+          <Loader2 className="animate-spin mx-auto text-emerald-600 mb-3" size={28} />
+          <h3 className="text-lg font-bold text-neutral-900">Loading Payment Options</h3>
+          <p className="text-sm text-neutral-500">Please wait...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!hasAnyProvider) {
     return (
@@ -61,6 +92,10 @@ export default function PaymentCheckout({ invoice, onClose, onSuccess }) {
         </div>
 
         <div className="bg-neutral-50 rounded-xl p-4 mb-6">
+          <div className="flex justify-between mb-2">
+            <span className="text-sm text-neutral-600">Invoice ID</span>
+            <span className="text-sm font-semibold">#{invoice._id?.slice(-8).toUpperCase()}</span>
+          </div>
           <div className="flex justify-between">
             <span className="text-sm text-neutral-600">Amount Due</span>
             <span className="text-lg font-bold text-neutral-900">{formatCurrency(invoice.total)}</span>
@@ -68,18 +103,20 @@ export default function PaymentCheckout({ invoice, onClose, onSuccess }) {
         </div>
 
         <div className="space-y-3">
-          <button
-            onClick={() => setMethod('razorpay')}
-            className="w-full flex items-center gap-3 p-4 border-2 border-neutral-200 rounded-xl hover:border-emerald-500 hover:bg-emerald-50 transition-all text-left"
-          >
-            <Smartphone className="text-emerald-600 shrink-0" size={22} />
-            <div>
-              <p className="font-semibold text-neutral-900">Razorpay</p>
-              <p className="text-xs text-neutral-500">UPI, Cards, Net Banking, Wallets</p>
-            </div>
-          </button>
+          {hasRazorpay && (
+            <button
+              onClick={() => setMethod('razorpay')}
+              className="w-full flex items-center gap-3 p-4 border-2 border-neutral-200 rounded-xl hover:border-emerald-500 hover:bg-emerald-50 transition-all text-left"
+            >
+              <Smartphone className="text-emerald-600 shrink-0" size={22} />
+              <div>
+                <p className="font-semibold text-neutral-900">Razorpay</p>
+                <p className="text-xs text-neutral-500">UPI, Cards, Net Banking, Wallets</p>
+              </div>
+            </button>
+          )}
 
-          {stripeKey && (
+          {hasStripe && (
             <button
               onClick={() => setMethod('stripe')}
               className="w-full flex items-center gap-3 p-4 border-2 border-neutral-200 rounded-xl hover:border-indigo-500 hover:bg-indigo-50 transition-all text-left"
