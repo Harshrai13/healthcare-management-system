@@ -44,14 +44,23 @@ const emailSettingsSchema = new mongoose.Schema(
     },
     lastConnectionAt: { type: Date },
     lastError: { type: String },
+    // SMTP settings
+    smtpEnabled: { type: Boolean, default: false },
+    smtpHost: { type: String, default: null },
+    smtpPort: { type: Number, default: 587 },
+    smtpUser: { type: String, default: null },
+    smtpPass: { type: String, default: null }, // encrypted
   },
   { timestamps: true }
 );
 
-// Pre-save hook: encrypt API key before saving
+// Pre-save hook: encrypt API key and SMTP password before saving
 emailSettingsSchema.pre('save', function (next) {
   if (this.isModified('resendApiKey') && this.resendApiKey) {
     this.resendApiKey = encrypt(this.resendApiKey);
+  }
+  if (this.isModified('smtpPass') && this.smtpPass) {
+    this.smtpPass = encrypt(this.smtpPass);
   }
   next();
 });
@@ -61,11 +70,40 @@ emailSettingsSchema.methods.getDecryptedKey = function () {
   return decrypt(this.resendApiKey);
 };
 
+// Method to decrypt SMTP password
+emailSettingsSchema.methods.getDecryptedSmtpPass = function () {
+  return decrypt(this.smtpPass);
+};
+
 // Static method to get decrypted key directly
 emailSettingsSchema.statics.getDecryptedApiKey = async function () {
   const settings = await this.findOne();
   if (!settings || !settings.resendApiKey) return null;
   return decrypt(settings.resendApiKey);
+};
+
+// Static method to get SMTP config
+emailSettingsSchema.statics.getSmtpConfig = async function () {
+  const settings = await this.findOne();
+  if (!settings || !settings.smtpEnabled || !settings.smtpHost || !settings.smtpUser) return null;
+  return {
+    host: settings.smtpHost,
+    port: settings.smtpPort || 587,
+    secure: (settings.smtpPort || 587) === 465,
+    user: settings.smtpUser,
+    pass: decrypt(settings.smtpPass),
+    senderEmail: settings.senderEmail || 'noreply@verdantcare.com',
+    senderName: settings.senderName || 'VerdantCare Medical Center',
+  };
+};
+
+// Static method to get sender identity
+emailSettingsSchema.statics.getSenderIdentity = async function () {
+  const settings = await this.findOne();
+  return {
+    senderName: settings?.senderName || 'VerdantCare Medical Center',
+    senderEmail: settings?.senderEmail || 'noreply@verdantcare.com',
+  };
 };
 
 module.exports = mongoose.model('EmailSettings', emailSettingsSchema);

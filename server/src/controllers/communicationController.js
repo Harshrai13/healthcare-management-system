@@ -133,11 +133,14 @@ async function getEmailSettings(req, res) {
       settings = await EmailSettings.create({});
     }
 
-    // Mask the API key for response
+    // Mask sensitive fields for response
     const response = settings.toObject();
     if (response.resendApiKey) {
       const key = response.resendApiKey;
       response.resendApiKey = key.length > 8 ? `${'*'.repeat(key.length - 4)}${key.slice(-4)}` : '****';
+    }
+    if (response.smtpPass) {
+      response.smtpPass = '••••••••';
     }
 
     res.json({ success: true, data: response });
@@ -148,18 +151,30 @@ async function getEmailSettings(req, res) {
 }
 
 /**
- * Update email settings (sender identity)
+ * Update email settings (sender identity + SMTP config)
  */
 async function updateEmailSettings(req, res) {
   try {
-    const { senderName, senderEmail } = req.body;
+    const { senderName, senderEmail, smtpHost, smtpPort, smtpUser, smtpPass, smtpEnabled } = req.body;
     let settings = await EmailSettings.findOne();
     if (!settings) settings = new EmailSettings({});
 
-    const oldValue = { senderName: settings.senderName, senderEmail: settings.senderEmail };
+    const oldValue = {
+      senderName: settings.senderName,
+      senderEmail: settings.senderEmail,
+      smtpHost: settings.smtpHost,
+      smtpPort: settings.smtpPort,
+      smtpUser: settings.smtpUser,
+      smtpEnabled: settings.smtpEnabled,
+    };
 
-    if (senderName) settings.senderName = senderName;
-    if (senderEmail) settings.senderEmail = senderEmail;
+    if (senderName !== undefined) settings.senderName = senderName;
+    if (senderEmail !== undefined) settings.senderEmail = senderEmail;
+    if (smtpHost !== undefined) settings.smtpHost = smtpHost;
+    if (smtpPort !== undefined) settings.smtpPort = parseInt(smtpPort, 10) || 587;
+    if (smtpUser !== undefined) settings.smtpUser = smtpUser;
+    if (smtpPass !== undefined && smtpPass !== '••••••••') settings.smtpPass = smtpPass; // masked value = unchanged
+    if (smtpEnabled !== undefined) settings.smtpEnabled = smtpEnabled;
 
     await settings.save();
 
@@ -169,7 +184,7 @@ async function updateEmailSettings(req, res) {
       action: 'EMAIL_SETTINGS_UPDATED',
       entity: 'EmailSettings',
       oldValue,
-      newValue: { senderName, senderEmail },
+      newValue: { senderName, senderEmail, smtpHost, smtpPort, smtpUser, smtpEnabled },
       ipAddress: req.ip,
     });
 
@@ -376,7 +391,7 @@ async function getCommunicationHealth(req, res) {
       require('../models/SMSLog').countDocuments({ status: 'pending' }),
     ]);
 
-    const emailServiceOnline = settings?.isEnabled && settings?.resendApiKey;
+    const emailServiceOnline = settings?.isEnabled && (settings?.resendApiKey || settings?.smtpEnabled);
     const smsServiceOnline = isTwilioConfigured();
 
     // Calculate health score
