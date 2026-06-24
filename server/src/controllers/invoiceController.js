@@ -5,7 +5,7 @@ const { AppError, ErrorCodes } = require('../utils/AppError');
 const logger = require('../utils/logger');
 const { notifyBillingReminder, notifyInvoiceGenerated, notifyPaymentSuccess, notifyReceiptGenerated } = require('../utils/notificationService');
 const { getStripe } = require('../config/stripe');
-const { getRazorpay } = require('../config/razorpay');
+const { getRazorpay, getRazorpayKeyId, getRazorpayKeySecret, getRazorpayWebhookSecret } = require('../config/razorpay');
 const { generateInvoicePDF, generateReceiptPDF } = require('../utils/pdfGenerator');
 
 async function getInvoices(req, res, next) {
@@ -244,13 +244,14 @@ async function createRazorpayOrder(req, res, next) {
 
     const order = await razorpay.orders.create(options);
 
+    const keyId = await getRazorpayKeyId();
     res.json({
       success: true,
       data: {
         orderId: order.id,
         amount: order.amount,
         currency: order.currency,
-        keyId: process.env.RAZORPAY_KEY_ID,
+        keyId,
         invoiceId: invoice._id.toString(),
         patientName: invoice.patientId?.firstName ? `${invoice.patientId.firstName} ${invoice.patientId.lastName}` : '',
         patientEmail: invoice.patientId?.email || '',
@@ -274,8 +275,10 @@ async function verifyRazorpayPayment(req, res, next) {
 
     // Verify signature
     const sign = razorpay_order_id + '|' + razorpay_payment_id;
+    const keySecret = await getRazorpayKeySecret();
+    if (!keySecret) throw new AppError('Razorpay key secret not configured.', 503, ErrorCodes.SERVICE_UNAVAILABLE);
     const expectedSignature = crypto
-      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+      .createHmac('sha256', keySecret)
       .update(sign.toString())
       .digest('hex');
 
@@ -325,14 +328,7 @@ async function verifyRazorpayPayment(req, res, next) {
  */
 async function razorpayWebhook(req, res, next) {
   try {
-    let webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
-    if (!webhookSecret) {
-      try {
-        const Settings = require('../models/Settings');
-        const settings = await Settings.findOne();
-        webhookSecret = settings?.razorpayWebhookSecret || '';
-      } catch (_) { /* ignore */ }
-    }
+    const webhookSecret = await getRazorpayWebhookSecret();
     if (!webhookSecret) return res.status(503).json({ error: 'Razorpay webhook not configured' });
 
     const signature = req.headers['x-razorpay-signature'];
