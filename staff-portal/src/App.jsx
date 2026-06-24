@@ -19,6 +19,8 @@ const SchedulePage = lazy(() => import('@/features/doctor/SchedulePage'));
 const PatientsListPage = lazy(() => import('@/features/doctor/PatientsListPage'));
 const ConsultationsPage = lazy(() => import('@/features/doctor/ConsultationsPage'));
 const CreatePrescriptionPage = lazy(() => import('@/features/doctor/CreatePrescriptionPage'));
+const DoctorBillingPage = lazy(() => import('@/features/doctor/DoctorBillingPage'));
+const DoctorProfilePage = lazy(() => import('@/features/doctor/DoctorProfilePage'));
 
 // ── Telehealth (shared) ─────────────────────────────────────────────────────
 const TelehealthPage = lazy(() => import('@/features/telehealth/TelehealthPage'));
@@ -94,6 +96,8 @@ function StaffApp() {
           <Route path="patients" element={<PatientsListPage />} />
           <Route path="consultations" element={<ConsultationsPage />} />
           <Route path="prescriptions/new" element={<CreatePrescriptionPage />} />
+          <Route path="billing" element={<DoctorBillingPage />} />
+          <Route path="profile" element={<DoctorProfilePage />} />
           <Route path="telehealth/:consultationId" element={<TelehealthPage />} />
         </Route>
 

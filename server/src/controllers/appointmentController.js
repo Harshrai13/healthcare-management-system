@@ -63,7 +63,7 @@ async function createAppointment(req, res, next) {
 
 async function getAppointments(req, res, next) {
   try {
-    const { status, page = 1, limit = 10 } = req.query;
+    const { status, type, page = 1, limit = 10 } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const where = {};
     if (req.user.role === 'PATIENT') where.patientId = req.user.id;
@@ -72,6 +72,7 @@ async function getAppointments(req, res, next) {
       where.doctorId = dp?._id;
     }
     if (status) where.status = status;
+    if (type) where.consultationType = type;
 
     const [appointments, total] = await Promise.all([
       Appointment.find(where)

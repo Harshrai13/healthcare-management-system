@@ -26,7 +26,7 @@ function ConsultationsPage() {
     queryKey: ['doctor_consultations'],
     queryFn: async () => {
       const { data } = await consultationsAPI.getAll();
-      return data || [];
+      return data.data || data || [];
     },
   });
 

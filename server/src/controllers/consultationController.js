@@ -105,8 +105,14 @@ async function completeConsultation(req, res, next) {
 
 async function getPatientConsultations(req, res, next) {
   try {
-    const patientId = req.user.id;
-    const consultations = await Consultation.find({ patientId })
+    let query = {};
+    if (req.user.role === 'DOCTOR') {
+      const dp = await require('../models').DoctorProfile.findOne({ userId: req.user.id }).select('_id');
+      query.doctorId = dp?._id;
+    } else {
+      query.patientId = req.user.id;
+    }
+    const consultations = await Consultation.find(query)
       .populate({ path: 'appointmentId', populate: [{ path: 'doctorId', populate: { path: 'userId', select: 'firstName lastName' } }, { path: 'serviceId', select: 'name' }] })
       .populate({ path: 'doctorId', populate: { path: 'userId', select: 'firstName lastName' } })
       .sort({ createdAt: -1 });
