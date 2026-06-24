@@ -122,7 +122,7 @@ async function uploadLogo(req, res, next) {
   } catch (error) { next(error); }
 }
 
-module.exports = { getSettings, getPublicSettings, updateSettings, uploadLogo, getPaymentConfig };
+module.exports = { getSettings, getPublicSettings, updateSettings, uploadLogo, getPaymentConfig, verifyPaymentGateway };
 
 async function getPaymentConfig(req, res, next) {
   try {
@@ -152,4 +152,38 @@ async function getPaymentConfig(req, res, next) {
       },
     });
   } catch (error) { next(error); }
+}
+
+async function verifyPaymentGateway(req, res, next) {
+  try {
+    const { gateway, keyId, keySecret, publishableKey, secretKey } = req.body;
+
+    if (gateway === 'razorpay') {
+      if (!keyId || !keySecret) {
+        return res.json({ success: false, message: 'Razorpay Key ID and Key Secret are required' });
+      }
+      const Razorpay = require('razorpay');
+      const instance = new Razorpay({ key_id: keyId, key_secret: keySecret });
+      // Test by fetching payments (lightweight call)
+      await instance.payments.fetch({ count: 1 });
+      logger.info('Razorpay connection verified', { adminId: req.user.id });
+      return res.json({ success: true, message: 'Razorpay connection verified successfully' });
+    }
+
+    if (gateway === 'stripe') {
+      if (!secretKey) {
+        return res.json({ success: false, message: 'Stripe Secret Key is required' });
+      }
+      const stripe = require('stripe')(secretKey);
+      // Test by fetching balance (lightweight call)
+      await stripe.balance.retrieve();
+      logger.info('Stripe connection verified', { adminId: req.user.id });
+      return res.json({ success: true, message: 'Stripe connection verified successfully' });
+    }
+
+    return res.status(400).json({ success: false, message: 'Invalid gateway specified' });
+  } catch (error) {
+    logger.error('Payment gateway verification failed', { error: error.message, gateway: req.body.gateway });
+    return res.json({ success: false, message: `Connection failed: ${error.message}` });
+  }
 }

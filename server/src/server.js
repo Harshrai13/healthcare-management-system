@@ -72,8 +72,26 @@ async function startServer() {
       logger.warn('Auto-seed skipped:', seedErr.message);
     }
 
+    // 5. Seed email templates (always run to keep templates up to date)
+    try {
+      const { seedEmailTemplates } = require('./seeds/seedEmailTemplates');
+      await seedEmailTemplates();
+      logger.info('Email templates seeded successfully');
+    } catch (templateErr) {
+      logger.warn('Email template seeding skipped:', templateErr.message);
+    }
+
     const server = http.createServer(app);
     initializeSocket(server);
+
+    // 6. Start scheduled reminders
+    try {
+      const { startScheduledReminders } = require('./utils/scheduledReminders');
+      startScheduledReminders();
+      logger.info('Scheduled reminders started');
+    } catch (cronErr) {
+      logger.warn('Scheduled reminders failed to start:', cronErr.message);
+    }
 
     server.listen(PORT, () => {
       logger.info(`VerdantCare server running on port ${PORT}`, {

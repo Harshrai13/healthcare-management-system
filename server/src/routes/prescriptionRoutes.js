@@ -6,5 +6,6 @@ const prescriptionController = require('../controllers/prescriptionController');
 router.get('/', authenticate, prescriptionController.getPrescriptions);
 router.post('/', authenticate, authorize('DOCTOR', 'SUPER_ADMIN'), prescriptionController.createPrescription);
 router.get('/:id', authenticate, prescriptionController.getPrescriptionById);
+router.put('/:id', authenticate, authorize('DOCTOR', 'SUPER_ADMIN'), prescriptionController.updatePrescription);
 
 module.exports = router;

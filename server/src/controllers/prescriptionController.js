@@ -1,7 +1,7 @@
 const { Prescription, DoctorProfile } = require('../models');
 const { AppError, ErrorCodes } = require('../utils/AppError');
 const logger = require('../utils/logger');
-const { notifyPrescriptionIssued } = require('../utils/notificationService');
+const { notifyPrescriptionIssued, notifyPrescriptionUpdated } = require('../utils/notificationService');
 
 async function getPrescriptions(req, res, next) {
   try {
@@ -84,4 +84,27 @@ async function getPrescriptionById(req, res, next) {
   }
 }
 
-module.exports = { getPrescriptions, createPrescription, getPrescriptionById };
+async function updatePrescription(req, res, next) {
+  try {
+    const { medications, instructions } = req.body;
+    const prescription = await Prescription.findByIdAndUpdate(
+      req.params.id,
+      { medications, instructions, updatedAt: new Date() },
+      { new: true }
+    )
+      .populate({ path: 'patientId', select: 'firstName lastName email' })
+      .populate({ path: 'doctorId', populate: { path: 'userId', select: 'firstName lastName' } });
+
+    if (!prescription) throw new AppError('Prescription not found.', 404, ErrorCodes.NOT_FOUND);
+
+    setImmediate(() => {
+      notifyPrescriptionUpdated(prescription).catch((err) => logger.error('Notification error', { err: err.message }));
+    });
+
+    res.json({ success: true, message: 'Prescription updated.', data: prescription });
+  } catch (error) {
+    next(error);
+  }
+}
+
+module.exports = { getPrescriptions, createPrescription, getPrescriptionById, updatePrescription };

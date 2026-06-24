@@ -1,5 +1,8 @@
 const nodemailer = require('nodemailer');
 const logger = require('./logger');
+const { sendViaResend, getSenderIdentity: getResendSenderIdentity } = require('../config/resend');
+const EmailLog = require('../models/EmailLog');
+const EmailTemplate = require('../models/EmailTemplate');
 
 let transporter = null;
 
@@ -13,7 +16,6 @@ function isSmtpConfigured() {
 }
 
 function getTransporter() {
-  // Don't cache null — retry if SMTP config was added after startup
   if (transporter) return transporter;
 
   if (!isSmtpConfigured()) {
@@ -39,35 +41,76 @@ function getTransporter() {
   return transporter;
 }
 
-async function sendEmail({ to, subject, html, text }) {
-  try {
-    const transport = getTransporter();
+async function getSenderIdentity() {
+  const settings = await (require('../models/EmailSettings')).findOne();
+  return {
+    senderName: settings?.senderName || 'VerdantCare Medical Center',
+    senderEmail: settings?.senderEmail || process.env.EMAIL_FROM || 'noreply@verdantcare.com',
+  };
+}
 
-    if (!transport) {
-      // SMTP not configured — log to console (development / unconfigured production)
-      logger.warn('SMTP not configured — email logged to console only');
+async function sendEmail({ to, subject, html, text, templateName }) {
+  let result;
+  let transportUsed = 'none';
+
+  // Try Resend first
+  try {
+    result = await sendViaResend({ to, subject, html, text });
+    if (result.emailSent) {
+      transportUsed = 'resend';
+    }
+  } catch (_) {
+    // Resend failed, try SMTP fallback
+  }
+
+  // Fallback to SMTP if Resend not configured or failed
+  if (!result?.emailSent) {
+    const transport = getTransporter();
+    if (transport) {
+      try {
+        const { senderName, senderEmail } = await getSenderIdentity();
+        const from = senderName ? `${senderName} <${senderEmail}>` : senderEmail;
+        const info = await transport.sendMail({ from, to, subject, html, text });
+        result = { messageId: info.messageId, emailSent: true };
+        transportUsed = 'smtp';
+      } catch (smtpErr) {
+        result = { messageId: null, emailSent: false, error: smtpErr.message };
+      }
+    } else {
+      // No transport configured — log to console only
+      logger.warn('No email transport configured — email logged to console only');
       const otpMatch = html?.match(/font-size:\s*36px[^>]*>([\d\s]+)</);
       if (otpMatch) {
         console.log('\n\n ═══════════════════════════════════════════');
         console.log(`   VERIFICATION CODE for ${to}: ${otpMatch[1].trim()}`);
         console.log('═══════════════════════════════════════════\n\n');
       }
-      return { messageId: 'dev-console-fallback', emailSent: false };
+      result = { messageId: 'dev-console-fallback', emailSent: false };
     }
+  }
 
-    const info = await transport.sendMail({
-      from: process.env.EMAIL_FROM || 'noreply@verdantcare.com',
+  // Always create EmailLog record
+  try {
+    await EmailLog.create({
       to,
       subject,
-      html,
-      text,
+      templateName: templateName || null,
+      status: result.emailSent ? 'sent' : 'failed',
+      errorMessage: result.error || null,
+      messageId: result.messageId || null,
+      sentAt: result.emailSent ? new Date() : null,
     });
-    logger.info('Email sent successfully', { to, subject, messageId: info.messageId });
-    return { ...info, emailSent: true };
-  } catch (error) {
-    logger.error('Email send failed', { to, subject, error: error.message });
-    return { messageId: null, emailSent: false, error: error.message };
+  } catch (logErr) {
+    logger.error('Failed to create EmailLog', { error: logErr.message });
   }
+
+  if (result.emailSent) {
+    logger.info('Email sent successfully', { to, subject, messageId: result.messageId, transport: transportUsed });
+  } else {
+    logger.error('Email send failed', { to, subject, error: result.error });
+  }
+
+  return result;
 }
 
 const emailTemplates = {
@@ -358,14 +401,62 @@ const emailTemplates = {
 };
 
 async function sendTemplateEmail(to, templateName, data) {
-  const template = emailTemplates[templateName];
-  if (!template) {
-    logger.error('Email template not found', { templateName });
-    return { emailSent: false, error: 'Template not found' };
+  // Check DB for custom template first
+  let emailContent;
+  try {
+    const dbTemplate = await EmailTemplate.findOne({ name: templateName, isActive: true });
+    if (dbTemplate) {
+      // Use DB template with data interpolation
+      let subject = dbTemplate.subject;
+      let html = dbTemplate.htmlBody;
+      // Simple variable replacement for common placeholders
+      if (data) {
+        Object.entries(data).forEach(([key, value]) => {
+          const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+          subject = subject.replace(regex, value);
+          html = html.replace(regex, value);
+        });
+      }
+      emailContent = { subject, html };
+    } else {
+      // Fallback to hardcoded template
+      const template = emailTemplates[templateName];
+      if (!template) {
+        logger.error('Email template not found', { templateName });
+        return { emailSent: false, error: 'Template not found' };
+      }
+      emailContent = typeof template === 'function' ? template(data) : template;
+    }
+  } catch (dbErr) {
+    // If DB query fails, fall back to hardcoded
+    const template = emailTemplates[templateName];
+    if (!template) {
+      logger.error('Email template not found', { templateName });
+      return { emailSent: false, error: 'Template not found' };
+    }
+    emailContent = typeof template === 'function' ? template(data) : template;
   }
 
-  const emailContent = typeof template === 'function' ? template(data) : template;
-  return await sendEmail({ to, ...emailContent });
+  return await sendEmail({ to, templateName, ...emailContent });
 }
 
-module.exports = { sendEmail, sendTemplateEmail, emailTemplates };
+async function sendTestEmail(to) {
+  const { senderName, senderEmail } = await getSenderIdentity();
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px;">
+      <h2 style="color: #0A4A3C;">Test Email from VerdantCare</h2>
+      <p style="color: #4b5563;">This is a test email to verify your email configuration.</p>
+      <p style="color: #4b5563;">Sender: ${senderName} &lt;${senderEmail}&gt;</p>
+      <p style="color: #4b5563;">Sent at: ${new Date().toLocaleString()}</p>
+      <p style="color: #0A4A3C; font-weight: 600;">If you received this email, your email service is working correctly!</p>
+    </div>
+  `;
+  return await sendEmail({
+    to,
+    subject: 'VerdantCare Test Email',
+    html,
+    templateName: 'test_email',
+  });
+}
+
+module.exports = { sendEmail, sendTemplateEmail, sendTestEmail, emailTemplates, getSenderIdentity };

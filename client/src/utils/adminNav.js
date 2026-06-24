@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, Calendar, User, Users, CreditCard, BookOpen, Star,
-  BarChart3, PieChart, Settings, Shield, Eye,
+  BarChart3, PieChart, Settings, Shield, Eye, Mail,
 } from 'lucide-react';
 
 const ALL_ADMIN_ROLES = ['SUPER_ADMIN', 'CONTENT_MANAGER', 'BILLING_STAFF', 'RECEPTIONIST'];
@@ -15,6 +15,7 @@ const ADMIN_NAV_BY_ROLE = {
     { name: 'Billing & Revenue', path: '/admin/billing', icon: CreditCard },
     { name: 'Blog Content', path: '/admin/blog', icon: BookOpen },
     { name: 'Reviews', path: '/admin/reviews', icon: Star },
+    { name: 'Communication', path: '/admin/communication', icon: Mail },
     { name: 'Analytics', path: '/admin/analytics', icon: BarChart3 },
     { name: 'Reports', path: '/admin/reports', icon: PieChart },
     { name: 'Login As User', path: '/admin/login-as', icon: Eye },

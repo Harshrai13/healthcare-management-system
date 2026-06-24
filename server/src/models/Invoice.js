@@ -16,6 +16,8 @@ const invoiceSchema = new mongoose.Schema(
     },
     paidAt: { type: Date },
     dueDate: { type: Date, required: true },
+    reminderSent: { type: Boolean, default: false },
+    reminderSent3Days: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

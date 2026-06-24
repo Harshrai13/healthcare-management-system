@@ -1,4 +1,5 @@
 const twilio = require('twilio');
+const logger = require('../utils/logger');
 
 let twilioClient = null;
 
@@ -55,15 +56,43 @@ async function createVideoRoom(uniqueName) {
   return room;
 }
 
-async function sendSMS(to, body) {
+async function sendSMS(to, body, options = {}) {
   const client = getTwilioClient();
   if (!client) throw new Error('Twilio is not configured.');
-  const message = await client.messages.create({
-    body,
-    from: process.env.TWILIO_PHONE_NUMBER,
-    to,
-  });
-  return message;
+
+  const SMSLog = require('../models/SMSLog');
+  let logRecord;
+
+  try {
+    logRecord = await SMSLog.create({
+      to,
+      body,
+      status: 'pending',
+      recipientType: options.recipientType || 'patient',
+      recipientId: options.recipientId || null,
+    });
+
+    const message = await client.messages.create({
+      body,
+      from: process.env.TWILIO_PHONE_NUMBER,
+      to,
+    });
+
+    logRecord.status = 'sent';
+    logRecord.providerMessageId = message.sid;
+    await logRecord.save();
+
+    logger.info('SMS sent successfully', { to, sid: message.sid });
+    return message;
+  } catch (error) {
+    if (logRecord) {
+      logRecord.status = 'failed';
+      logRecord.errorMessage = error.message;
+      await logRecord.save();
+    }
+    logger.error('SMS send failed', { to, error: error.message });
+    throw error;
+  }
 }
 
 module.exports = { getTwilioClient, generateVideoToken, createVideoRoom, sendSMS, isTwilioConfigured };

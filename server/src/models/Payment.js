@@ -17,6 +17,5 @@ const paymentSchema = new mongoose.Schema(
 
 paymentSchema.index({ patientId: 1, createdAt: -1 });
 paymentSchema.index({ status: 1 });
-paymentSchema.index({ invoiceId: 1 });
 
 module.exports = mongoose.model('Payment', paymentSchema);

@@ -11,12 +11,15 @@ const appointmentSchema = new mongoose.Schema(
     consultationType: { type: String, enum: ['IN_PERSON', 'VIDEO'], default: 'IN_PERSON' },
     status: {
       type: String,
-      enum: ['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED', 'RESCHEDULED', 'NO_SHOW'],
+      enum: ['PENDING', 'CONFIRMED', 'APPROVED', 'REJECTED', 'COMPLETED', 'CANCELLED', 'RESCHEDULED', 'NO_SHOW'],
       default: 'PENDING',
       index: true,
     },
     notes: { type: String },
     cancellationReason: { type: String },
+    isFollowUp: { type: Boolean, default: false },
+    reminderSent24h: { type: Boolean, default: false },
+    reminderSent1h: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

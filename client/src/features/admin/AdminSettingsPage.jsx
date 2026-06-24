@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Save, Bell, Shield, Globe, CreditCard, Layout, Upload, Phone, Mail, MapPin, Clock, Share2, Eye, EyeOff } from 'lucide-react';
+import { Save, Bell, Shield, Globe, CreditCard, Layout, Upload, Phone, Mail, MapPin, Clock, Share2, Eye, EyeOff, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { settingsAPI } from '../../api/generalAPI';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -96,6 +96,31 @@ export default function AdminSettingsPage() {
       const msg = err?.response?.data?.message || 'Failed to upload logo';
       toast.error(msg);
     },
+  });
+
+  const [verifyStatus, setVerifyStatus] = useState({ razorpay: null, stripe: null });
+
+  const verifyMutation = useMutation({
+    mutationFn: async (gateway) => {
+      const payload = { gateway };
+      if (gateway === 'razorpay') {
+        payload.keyId = settings.razorpayKeyId;
+        payload.keySecret = settings.razorpayKeySecret;
+      } else {
+        payload.secretKey = settings.stripeSecretKey;
+      }
+      const { data } = await settingsAPI.verifyGateway(payload);
+      return data;
+    },
+    onSuccess: (data, gateway) => {
+      setVerifyStatus((prev) => ({ ...prev, [gateway]: data.success }));
+      if (data.success) {
+        toast.success(data.message);
+      } else {
+        toast.error(data.message);
+      }
+    },
+    onError: () => toast.error('Verification failed'),
   });
 
   const handleLogoUpload = (e) => {
@@ -530,6 +555,8 @@ export default function AdminSettingsPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    {verifyStatus.razorpay === true && <CheckCircle size={18} className="text-emerald-500" />}
+                    {verifyStatus.razorpay === false && <XCircle size={18} className="text-red-500" />}
                     <span className={`text-xs font-semibold px-2 py-1 rounded-full ${settings.razorpayEnabled ? 'bg-emerald-100 text-emerald-700' : 'bg-neutral-100 text-neutral-500'}`}>
                       {settings.razorpayEnabled ? 'Active' : 'Inactive'}
                     </span>
@@ -591,6 +618,16 @@ export default function AdminSettingsPage() {
                     </div>
                   </div>
                 </div>
+                <div className="mt-4">
+                  <button
+                    onClick={() => verifyMutation.mutate('razorpay')}
+                    disabled={verifyMutation.isPending || !settings.razorpayKeyId || !settings.razorpayKeySecret}
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {verifyMutation.isPending && verifyMutation.variables === 'razorpay' ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+                    Verify Connection
+                  </button>
+                </div>
               </div>
 
               {/* Stripe Configuration */}
@@ -606,6 +643,8 @@ export default function AdminSettingsPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    {verifyStatus.stripe === true && <CheckCircle size={18} className="text-emerald-500" />}
+                    {verifyStatus.stripe === false && <XCircle size={18} className="text-red-500" />}
                     <span className={`text-xs font-semibold px-2 py-1 rounded-full ${settings.stripeEnabled ? 'bg-emerald-100 text-emerald-700' : 'bg-neutral-100 text-neutral-500'}`}>
                       {settings.stripeEnabled ? 'Active' : 'Inactive'}
                     </span>
@@ -666,6 +705,16 @@ export default function AdminSettingsPage() {
                       </button>
                     </div>
                   </div>
+                </div>
+                <div className="mt-4">
+                  <button
+                    onClick={() => verifyMutation.mutate('stripe')}
+                    disabled={verifyMutation.isPending || !settings.stripeSecretKey}
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {verifyMutation.isPending && verifyMutation.variables === 'stripe' ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+                    Verify Connection
+                  </button>
                 </div>
               </div>
 

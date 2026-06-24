@@ -19,4 +19,7 @@ router.post('/logo', authenticate, authorize('SUPER_ADMIN'), upload.single('logo
 // GET /settings/payment-config - get payment gateway config (masked secrets)
 router.get('/payment-config', authenticate, authorize('SUPER_ADMIN'), settingsController.getPaymentConfig);
 
+// POST /settings/verify-gateway - verify payment gateway credentials
+router.post('/verify-gateway', authenticate, authorize('SUPER_ADMIN'), settingsController.verifyPaymentGateway);
+
 module.exports = router;

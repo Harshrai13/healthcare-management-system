@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const { Appointment, DoctorProfile, AppointmentWaitlist, Consultation } = require('../models');
 const { AppError, ErrorCodes } = require('../utils/AppError');
 const logger = require('../utils/logger');
-const { notifyAppointmentConfirmed, notifyAppointmentCancelled, notifyAppointmentRescheduled, notifyTelehealthReminder, createNotification } = require('../utils/notificationService');
+const { notifyAppointmentConfirmed, notifyAppointmentCancelled, notifyAppointmentRescheduled, notifyTelehealthReminder, notifyAppointmentApproved, notifyAppointmentRejected, createNotification } = require('../utils/notificationService');
 
 async function createAppointment(req, res, next) {
   try {
@@ -111,6 +111,16 @@ async function updateAppointment(req, res, next) {
         if (appointment.consultationType === 'VIDEO') {
           notifyTelehealthReminder(appointment).catch((err) => logger.error('Telehealth reminder error', { err: err.message }));
         }
+      });
+    }
+    if (status === 'APPROVED') {
+      setImmediate(() => {
+        notifyAppointmentApproved(appointment).catch((err) => logger.error('Notification error', { err: err.message }));
+      });
+    }
+    if (status === 'REJECTED') {
+      setImmediate(() => {
+        notifyAppointmentRejected(appointment, notes).catch((err) => logger.error('Notification error', { err: err.message }));
       });
     }
     if (status === 'COMPLETED') {

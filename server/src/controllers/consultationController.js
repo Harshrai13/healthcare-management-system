@@ -1,5 +1,7 @@
 const { Appointment, Consultation } = require('../models');
 const { AppError, ErrorCodes } = require('../utils/AppError');
+const logger = require('../utils/logger');
+const { notifyConsultationComplete } = require('../utils/notificationService');
 
 async function startConsultation(req, res, next) {
   try {
@@ -78,11 +80,24 @@ async function completeConsultation(req, res, next) {
     const consultation = await Consultation.findByIdAndUpdate(req.params.id, {
       status: 'COMPLETED', endedAt: new Date(), notes,
       followUpDate: followUpDate ? new Date(followUpDate) : null,
-    }, { new: true });
+    }, { new: true })
+      .populate({ path: 'appointmentId' })
+      .populate({ path: 'doctorId', populate: { path: 'userId', select: 'firstName lastName' } })
+      .populate({ path: 'patientId', select: 'firstName lastName email' });
 
     // Notify via socket that consultation ended
     const { emitToRoom } = require('../config/socket');
     emitToRoom(`consultation:${consultation._id}`, 'consultation:ended', { consultationId: consultation._id });
+
+    // Send consultation completion notification + email
+    setImmediate(() => {
+      const appointment = consultation.appointmentId;
+      if (appointment) {
+        appointment.patientId = consultation.patientId;
+        appointment.doctorId = consultation.doctorId;
+        notifyConsultationComplete(appointment).catch((err) => logger.error('Consultation complete notification error', { err: err.message }));
+      }
+    });
 
     res.json({ success: true, message: 'Consultation completed.', data: consultation });
   } catch (error) { next(error); }

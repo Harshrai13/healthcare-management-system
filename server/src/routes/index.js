@@ -19,6 +19,7 @@ const messageRoutes = require('./messageRoutes');
 const insuranceRoutes = require('./insuranceRoutes');
 const settingsRoutes = require('./settingsRoutes');
 const publicRoutes = require('./publicRoutes');
+const communicationRoutes = require('./communicationRoutes');
 
 router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
@@ -37,6 +38,7 @@ router.use('/messages', messageRoutes);
 router.use('/admin', adminRoutes);
 router.use('/insurance', insuranceRoutes);
 router.use('/settings', settingsRoutes);
+router.use('/communication', communicationRoutes);
 router.use('/public', publicRoutes);
 
 module.exports = router;

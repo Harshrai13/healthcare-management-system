@@ -3,7 +3,7 @@ const crypto = require('crypto');
 const { Invoice, Payment } = require('../models');
 const { AppError, ErrorCodes } = require('../utils/AppError');
 const logger = require('../utils/logger');
-const { notifyBillingReminder } = require('../utils/notificationService');
+const { notifyBillingReminder, notifyInvoiceGenerated, notifyPaymentSuccess, notifyReceiptGenerated } = require('../utils/notificationService');
 const { getStripe } = require('../config/stripe');
 const { getRazorpay } = require('../config/razorpay');
 const { generateInvoicePDF, generateReceiptPDF } = require('../utils/pdfGenerator');
@@ -106,7 +106,7 @@ async function createInvoice(req, res, next) {
     });
     await invoice.populate({ path: 'patientId', select: 'firstName lastName email' });
     setImmediate(() => {
-      notifyBillingReminder(invoice).catch((err) => logger.error('Notification error', { err: err.message }));
+      notifyInvoiceGenerated(invoice).catch((err) => logger.error('Notification error', { err: err.message }));
     });
     res.status(201).json({ success: true, message: 'Invoice created.', data: invoice });
   } catch (error) {
@@ -308,6 +308,13 @@ async function verifyRazorpayPayment(req, res, next) {
 
     logger.info('Razorpay payment verified', { invoiceId: invoice._id, paymentId: razorpay_payment_id });
     res.json({ success: true, message: 'Payment verified successfully.', data: newPayment });
+
+    setImmediate(() => {
+      newPayment.populate({ path: 'patientId', select: 'firstName lastName email' }).then((populatedPayment) => {
+        notifyPaymentSuccess(populatedPayment).catch((err) => logger.error('Payment success notification error', { err: err.message }));
+        notifyReceiptGenerated(populatedPayment).catch((err) => logger.error('Receipt notification error', { err: err.message }));
+      });
+    });
   } catch (error) {
     next(error);
   }
@@ -367,6 +374,16 @@ async function razorpayWebhook(req, res, next) {
             await session.endSession();
           }
           logger.info('Razorpay webhook: payment captured', { invoiceId, paymentId: payment.id });
+          setImmediate(() => {
+            Payment.findOne({ transactionId: payment.id })
+              .populate({ path: 'patientId', select: 'firstName lastName email' })
+              .then((webhookPayment) => {
+                if (webhookPayment) {
+                  notifyPaymentSuccess(webhookPayment).catch((err) => logger.error('Webhook payment notification error', { err: err.message }));
+                  notifyReceiptGenerated(webhookPayment).catch((err) => logger.error('Webhook receipt notification error', { err: err.message }));
+                }
+              });
+          });
         }
       }
     }
@@ -418,9 +435,24 @@ async function processPayment(req, res, next) {
 
     logger.info('Payment processed', { invoiceId: invoice._id, amount, method });
     res.json({ success: true, message: 'Payment processed successfully.', data: newPayment });
+
+    setImmediate(() => {
+      newPayment.populate({ path: 'patientId', select: 'firstName lastName email' }).then((populatedPayment) => {
+        notifyPaymentSuccess(populatedPayment).catch((err) => logger.error('Payment success notification error', { err: err.message }));
+        notifyReceiptGenerated(populatedPayment).catch((err) => logger.error('Receipt notification error', { err: err.message }));
+      });
+    });
   } catch (error) {
     next(error);
   }
+}
+
+// Payment failed helper
+async function notifyPaymentFailure(invoice, error) {
+  const { notifyPaymentFailed } = require('../utils/notificationService');
+  await invoice.populate({ path: 'patientId', select: 'firstName lastName email' });
+  const payment = { patientId: invoice.patientId, invoiceId: invoice._id, amount: invoice.total };
+  notifyPaymentFailed(payment, error?.message || 'Payment failed').catch((err) => logger.error('Payment failed notification error', { err: err.message }));
 }
 
 /**
@@ -474,6 +506,16 @@ async function stripeWebhook(req, res, next) {
             await session.endSession();
           }
           logger.info('Stripe webhook: payment completed', { invoiceId, paymentIntentId: paymentIntent.id });
+          setImmediate(() => {
+            Payment.findOne({ transactionId: paymentIntent.id })
+              .populate({ path: 'patientId', select: 'firstName lastName email' })
+              .then((webhookPayment) => {
+                if (webhookPayment) {
+                  notifyPaymentSuccess(webhookPayment).catch((err) => logger.error('Webhook payment notification error', { err: err.message }));
+                  notifyReceiptGenerated(webhookPayment).catch((err) => logger.error('Webhook receipt notification error', { err: err.message }));
+                }
+              });
+          });
         }
       }
     }

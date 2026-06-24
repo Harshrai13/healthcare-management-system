@@ -23,7 +23,7 @@ const doctorEducationSchema = new mongoose.Schema({
 const doctorProfileSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
-    specialty: { type: String, required: true, index: true },
+    specialty: { type: String, required: true },
     bio: { type: String },
     education: [doctorEducationSchema],
     certifications: [{ type: String }],
@@ -33,7 +33,7 @@ const doctorProfileSchema = new mongoose.Schema(
     consultationModes: [{ type: String, enum: ['IN_PERSON', 'VIDEO'], default: ['IN_PERSON'] }],
     rating: { type: Number, default: 0 },
     reviewCount: { type: Number, default: 0 },
-    isAvailable: { type: Boolean, default: true, index: true },
+    isAvailable: { type: Boolean, default: true },
     schedules: [doctorScheduleSchema],
     timeOffs: [doctorTimeOffSchema],
   },
@@ -41,7 +41,6 @@ const doctorProfileSchema = new mongoose.Schema(
 );
 
 doctorProfileSchema.index({ specialty: 1, isAvailable: 1 });
-doctorProfileSchema.index({ userId: 1 });
 doctorProfileSchema.index({ isAvailable: 1, rating: -1 });
 
 module.exports = mongoose.model('DoctorProfile', doctorProfileSchema);

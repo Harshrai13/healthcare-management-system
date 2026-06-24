@@ -36,6 +36,13 @@ const AdminSettingsPage = lazy(() => import('@/features/admin/AdminSettingsPage'
 const AdminAuditLogsPage = lazy(() => import('@/features/admin/AdminAuditLogsPage'));
 const AdminLoginAsPage = lazy(() => import('@/features/admin/AdminLoginAsPage'));
 const AdminReportsPage = lazy(() => import('@/features/admin/AdminReportsPage'));
+const CommunicationDashboard = lazy(() => import('@/features/admin/communication/CommunicationDashboard'));
+const EmailManagement = lazy(() => import('@/features/admin/communication/EmailManagement'));
+const SMSManagement = lazy(() => import('@/features/admin/communication/SMSManagement'));
+const EmailProviderSettings = lazy(() => import('@/features/admin/communication/EmailProviderSettings'));
+const EmailTemplates = lazy(() => import('@/features/admin/communication/EmailTemplates'));
+const Announcements = lazy(() => import('@/features/admin/communication/Announcements'));
+const CommunicationAnalytics = lazy(() => import('@/features/admin/communication/CommunicationAnalytics'));
 
 const STAFF_ROLES = ['DOCTOR', 'SUPER_ADMIN', 'CONTENT_MANAGER', 'BILLING_STAFF', 'RECEPTIONIST'];
 const ADMIN_ROLES = ['SUPER_ADMIN', 'CONTENT_MANAGER', 'BILLING_STAFF', 'RECEPTIONIST'];
@@ -111,6 +118,13 @@ function StaffApp() {
           <Route path="audit-logs" element={<AdminAuditLogsPage />} />
           <Route path="login-as" element={<AdminLoginAsPage />} />
           <Route path="reports" element={<AdminReportsPage />} />
+          <Route path="communication" element={<CommunicationDashboard />} />
+          <Route path="communication/emails" element={<EmailManagement />} />
+          <Route path="communication/sms" element={<SMSManagement />} />
+          <Route path="communication/settings" element={<EmailProviderSettings />} />
+          <Route path="communication/templates" element={<EmailTemplates />} />
+          <Route path="communication/announcements" element={<Announcements />} />
+          <Route path="communication/analytics" element={<CommunicationAnalytics />} />
         </Route>
 
         {/* ── Root redirect: send staff users to their dashboard ─────────── */}

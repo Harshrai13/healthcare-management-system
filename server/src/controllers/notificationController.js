@@ -2,13 +2,20 @@ const { Notification } = require('../models');
 
 async function getNotifications(req, res, next) {
   try {
-    const { unreadOnly, page = 1, limit = 20 } = req.query;
+    const { unreadOnly, search, page = 1, limit = 20 } = req.query;
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);
     const skip = (pageNum - 1) * limitNum;
 
     const where = { userId: req.user.id };
     if (unreadOnly === 'true') where.isRead = false;
+    if (search) {
+      where.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { message: { $regex: search, $options: 'i' } },
+        { type: { $regex: search, $options: 'i' } },
+      ];
+    }
 
     const [notifications, total, unreadCount] = await Promise.all([
       Notification.find(where).skip(skip).limit(limitNum).sort({ createdAt: -1 }),

@@ -85,4 +85,5 @@ export const settingsAPI = {
   getPaymentConfig: () => api.get('/settings/payment-config'),
   update: (data) => api.put('/settings', data),
   uploadLogo: (formData) => api.post('/settings/logo', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  verifyGateway: (data) => api.post('/settings/verify-gateway', data),
 };

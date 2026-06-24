@@ -16,6 +16,12 @@ const AuditLog = require('./AuditLog');
 const Message = require('./Message');
 const InsuranceInfo = require('./InsuranceInfo');
 const Settings = require('./Settings');
+const EmailLog = require('./EmailLog');
+const SMSLog = require('./SMSLog');
+const EmailTemplate = require('./EmailTemplate');
+const EmailSettings = require('./EmailSettings');
+const Announcement = require('./Announcement');
+const ActivityLog = require('./ActivityLog');
 
 module.exports = {
   User,
@@ -36,4 +42,10 @@ module.exports = {
   Message,
   InsuranceInfo,
   Settings,
+  EmailLog,
+  SMSLog,
+  EmailTemplate,
+  EmailSettings,
+  Announcement,
+  ActivityLog,
 };
