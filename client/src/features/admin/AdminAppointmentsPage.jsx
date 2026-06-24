@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { Search, Filter, Download, MoreVertical, Calendar, XCircle, Clock, Video, Users, X, User, Phone, Mail } from 'lucide-react';
+import { Search, Filter, Download, MoreVertical, Calendar, XCircle, Clock, Video, Users, X, User, Phone, Mail, CheckCircle, Eye } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { appointmentsAPI } from '../../api/appointmentsAPI';
 import LoadingSpinner from '../../components/LoadingSpinner';
