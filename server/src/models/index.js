@@ -22,6 +22,7 @@ const EmailTemplate = require('./EmailTemplate');
 const EmailSettings = require('./EmailSettings');
 const Announcement = require('./Announcement');
 const ActivityLog = require('./ActivityLog');
+const VideoSettings = require('./VideoSettings');
 
 module.exports = {
   User,
@@ -48,4 +49,5 @@ module.exports = {
   EmailSettings,
   Announcement,
   ActivityLog,
+  VideoSettings,
 };

@@ -60,7 +60,7 @@ export const consultationsAPI = {
   getAll: () => api.get('/consultations'),
   start: (appointmentId) => api.post(`/consultations/${appointmentId}/start`),
   getById: (id) => api.get(`/consultations/${id}`),
-  complete: (id) => api.put(`/consultations/${id}/complete`),
+  complete: (id, data) => api.put(`/consultations/${id}/complete`, data),
 };
 
 // Public endpoints — no auth required (for homepage)

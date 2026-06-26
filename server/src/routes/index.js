@@ -20,6 +20,7 @@ const insuranceRoutes = require('./insuranceRoutes');
 const settingsRoutes = require('./settingsRoutes');
 const publicRoutes = require('./publicRoutes');
 const communicationRoutes = require('./communicationRoutes');
+const videoSettingsRoutes = require('./videoSettingsRoutes');
 
 router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
@@ -39,6 +40,7 @@ router.use('/admin', adminRoutes);
 router.use('/insurance', insuranceRoutes);
 router.use('/settings', settingsRoutes);
 router.use('/communication', communicationRoutes);
+router.use('/video-settings', videoSettingsRoutes);
 router.use('/public', publicRoutes);
 
 module.exports = router;

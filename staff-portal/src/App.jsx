@@ -45,6 +45,7 @@ const EmailProviderSettings = lazy(() => import('@/features/admin/communication/
 const EmailTemplates = lazy(() => import('@/features/admin/communication/EmailTemplates'));
 const Announcements = lazy(() => import('@/features/admin/communication/Announcements'));
 const CommunicationAnalytics = lazy(() => import('@/features/admin/communication/CommunicationAnalytics'));
+const VideoConsultationSettings = lazy(() => import('@/features/admin/video/VideoConsultationSettings'));
 
 const STAFF_ROLES = ['DOCTOR', 'SUPER_ADMIN', 'CONTENT_MANAGER', 'BILLING_STAFF', 'RECEPTIONIST'];
 const ADMIN_ROLES = ['SUPER_ADMIN', 'CONTENT_MANAGER', 'BILLING_STAFF', 'RECEPTIONIST'];
@@ -129,6 +130,7 @@ function StaffApp() {
           <Route path="communication/templates" element={<EmailTemplates />} />
           <Route path="communication/announcements" element={<Announcements />} />
           <Route path="communication/analytics" element={<CommunicationAnalytics />} />
+          <Route path="video-consultation" element={<VideoConsultationSettings />} />
         </Route>
 
         {/* ── Root redirect: send staff users to their dashboard ─────────── */}

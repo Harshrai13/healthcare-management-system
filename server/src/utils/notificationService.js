@@ -619,6 +619,41 @@ async function notifyClinicAnnouncement(announcement, users) {
   }
 }
 
+/**
+ * Consultation started notification — sent when doctor starts the consultation.
+ * Includes "Join Now" action for the patient.
+ */
+async function notifyConsultationStarted({ patientId, patientEmail, doctorName, consultationId, appointmentDate, appointmentTime }) {
+  const dateStr = appointmentDate
+    ? new Date(appointmentDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+    : 'today';
+
+  await createNotification({
+    userId: patientId,
+    type: 'CONSULTATION_STARTED',
+    title: 'Consultation Started — Join Now',
+    message: `Dr. ${doctorName} has started your video consultation. Click to join now.`,
+  });
+
+  // Send email if configured
+  try {
+    const videoSettings = require('../models/VideoSettings');
+    const settings = await videoSettings.getSettings();
+    if (settings.emailNotifications && patientEmail) {
+      await sendEmailNotification(patientEmail, 'consultationStarted', {
+        patientName: '',
+        doctorName: `Dr. ${doctorName}`,
+        date: dateStr,
+        time: appointmentTime || '',
+        clientUrl: process.env.CLIENT_URL,
+        consultationId,
+      });
+    }
+  } catch (err) {
+    logger.error('Failed to send consultation started email', { error: err.message });
+  }
+}
+
 module.exports = {
   createNotification,
   sendEmailNotification,
@@ -644,4 +679,5 @@ module.exports = {
   notifyClinicAnnouncement,
   notifyMedicalRecordCreated,
   notifyTelehealthReminder,
+  notifyConsultationStarted,
 };
