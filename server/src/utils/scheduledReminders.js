@@ -30,7 +30,7 @@ async function sendAppointmentReminders() {
         $gte: new Date(twentyFourHoursFromNow.setHours(0, 0, 0, 0)),
         $lt: new Date(twentyFourHoursFromNow.setHours(23, 59, 59, 999)),
       },
-      status: { $in: ['confirmed', 'approved'] },
+      status: { $in: ['CONFIRMED', 'APPROVED'] },
       reminderSent24h: { $ne: true },
     })
       .populate('patientId')
@@ -54,7 +54,7 @@ async function sendAppointmentReminders() {
         $gte: now,
         $lt: oneHourFromNow,
       },
-      status: { $in: ['confirmed', 'approved'] },
+      status: { $in: ['CONFIRMED', 'APPROVED'] },
       reminderSent1h: { $ne: true },
     })
       .populate('patientId')
@@ -83,7 +83,7 @@ async function sendAppointmentReminders() {
         $gte: new Date(twentyFourHoursFromNow.setHours(0, 0, 0, 0)),
         $lt: new Date(twentyFourHoursFromNow.setHours(23, 59, 59, 999)),
       },
-      status: { $in: ['confirmed', 'approved'] },
+      status: { $in: ['CONFIRMED', 'APPROVED'] },
       isFollowUp: true,
       reminderSent24h: { $ne: true },
     })

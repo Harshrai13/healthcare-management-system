@@ -4,7 +4,7 @@ A full-stack healthcare management system built with the MERN stack (MongoDB, Ex
 
 **Live:** [healthcare-management-system-s671.onrender.com](https://healthcare-management-system-s671.onrender.com)
 
----
+---![alt text](image.png)
 
 ## Features
 
@@ -70,7 +70,9 @@ A full-stack healthcare management system built with the MERN stack (MongoDB, Ex
 │   │   ├── layouts/         # DashboardLayout, PublicLayout
 │   │   ├── store/           # Redux store (auth, UI slices)
 │   │   └── utils/           # Helpers
-│   └── vite.config.js
+│   └── vit
+
+e.config.js
 ├── server/                  # Express API backend
 │   ├── src/
 │   │   ├── config/          # DB, Socket.io, Cloudinary, Stripe, Razorpay

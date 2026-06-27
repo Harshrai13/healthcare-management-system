@@ -117,7 +117,7 @@ async function createInvoice(req, res, next) {
 async function getDoctorInvoices(req, res, next) {
   try {
     const DoctorProfile = require('../models/DoctorProfile');
-    const Appointment = require('../models');
+    const Appointment = require('../models/Appointment');
     const { page = 1, limit = 20 } = req.query;
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);
@@ -127,7 +127,7 @@ async function getDoctorInvoices(req, res, next) {
     if (!doctorProfile) throw new AppError('Doctor profile not found.', 404, ErrorCodes.NOT_FOUND);
 
     // Get all appointment IDs for this doctor
-    const appointments = await Appointment.Appointment.find({ doctorId: doctorProfile._id }).select('_id');
+    const appointments = await Appointment.find({ doctorId: doctorProfile._id }).select('_id');
     const appointmentIds = appointments.map((a) => a._id);
 
     const where = { appointmentId: { $in: appointmentIds } };

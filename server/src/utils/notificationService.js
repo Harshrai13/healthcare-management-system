@@ -161,6 +161,12 @@ async function notifyMedicalRecordCreated(record) {
     title: 'Medical Record Updated',
     message: `Dr. ${doctor.userId?.lastName || 'Doctor'} has added a new medical record to your file.`,
   });
+
+  await sendEmailNotification(patient.email, 'medicalRecordCreated', {
+    patientName: `${patient.firstName} ${patient.lastName}`,
+    doctorName: `Dr. ${doctor.userId?.lastName || 'Doctor'}`,
+    clientUrl: process.env.CLIENT_URL,
+  });
 }
 
 /**
