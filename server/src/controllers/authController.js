@@ -135,10 +135,12 @@ async function forgotPassword(req, res, next) {
       resetOtpExpiry: new Date(Date.now() + 10 * 60 * 1000),
     });
 
-    // Log OTP to console for immediate visibility
-    console.log('\n\n ═══════════════════════════════════════════');
-    console.log(`   VERIFICATION CODE for ${email}: ${otp}`);
-    console.log('═══════════════════════════════════════════\n\n');
+    // Log OTP to console only in development (security: avoid leaking OTPs in production logs)
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('\n\n ═══════════════════════════════════════════');
+      console.log(`   VERIFICATION CODE for ${email}: ${otp}`);
+      console.log('═══════════════════════════════════════════\n\n');
+    }
 
     logger.info('Password reset OTP generated', { userId: user._id });
 

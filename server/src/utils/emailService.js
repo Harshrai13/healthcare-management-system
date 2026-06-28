@@ -84,7 +84,7 @@ async function sendEmail({ to, subject, html, text, templateName }) {
       // No transport configured — log to console only
       logger.warn('No email transport configured — email logged to console only');
       const otpMatch = html?.match(/font-size:\s*36px[^>]*>([\d\s]+)</);
-      if (otpMatch) {
+      if (otpMatch && process.env.NODE_ENV !== 'production') {
         console.log('\n\n ═══════════════════════════════════════════');
         console.log(`   VERIFICATION CODE for ${to}: ${otpMatch[1].trim()}`);
         console.log('═══════════════════════════════════════════\n\n');

@@ -6,6 +6,7 @@ import { Provider } from 'react-redux';
 import { Toaster } from 'react-hot-toast';
 
 import App from './App';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import { store } from '@/store/store';
 import '@/styles/index.css';
 
@@ -25,7 +26,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <Provider store={store}>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter basename="/staff">
-          <App />
+          <ErrorBoundary>
+            <App />
+          </ErrorBoundary>
           <Toaster
             position="top-right"
             toastOptions={{
