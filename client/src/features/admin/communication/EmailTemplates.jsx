@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Search, Edit2, Eye, Send, Save } from 'lucide-react';
 import { getEmailTemplates, updateEmailTemplate, previewEmailTemplate, sendTestTemplate } from '../../../api/communicationAPI';
+import { sanitizeHtml } from '../../../utils/sanitizeHtml';
 
 export default function EmailTemplates() {
   const [templates, setTemplates] = useState([]);
@@ -126,7 +127,7 @@ export default function EmailTemplates() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setPreview(null)}>
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-auto p-6" onClick={(e) => e.stopPropagation()}>
             <h3 className="font-semibold mb-2">{preview.subject}</h3>
-            <div dangerouslySetInnerHTML={{ __html: preview.html }} className="border border-neutral-200 rounded-lg p-4" />
+            <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(preview.html) }} className="border border-neutral-200 rounded-lg p-4" />
             <button onClick={() => setPreview(null)} className="mt-4 px-4 py-2 bg-neutral-100 rounded-lg">Close</button>
           </div>
         </div>

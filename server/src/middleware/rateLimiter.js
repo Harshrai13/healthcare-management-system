@@ -1,5 +1,8 @@
 const rateLimit = require('express-rate-limit');
 
+// Skip rate limiting in test environment to prevent 429 errors in integration tests
+const skipInTests = () => process.env.NODE_ENV === 'test';
+
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -10,6 +13,7 @@ const generalLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: skipInTests,
 });
 
 const authLimiter = rateLimit({
@@ -23,6 +27,7 @@ const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: true,
+  skip: skipInTests,
 });
 
 // More lenient limiter for public forms (contact, careers)
@@ -37,6 +42,7 @@ const publicFormLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: true,
+  skip: skipInTests,
 });
 
 const apiLimiter = rateLimit({
@@ -49,6 +55,7 @@ const apiLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: skipInTests,
 });
 
 module.exports = { generalLimiter, authLimiter, publicFormLimiter, apiLimiter };

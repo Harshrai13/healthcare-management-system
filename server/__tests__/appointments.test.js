@@ -1,7 +1,35 @@
+// Set test environment variables before requiring modules
+process.env.JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || 'test-access-secret';
+process.env.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'test-refresh-secret';
+process.env.JWT_ACCESS_EXPIRY = process.env.JWT_ACCESS_EXPIRY || '15m';
+process.env.JWT_REFRESH_EXPIRY = process.env.JWT_REFRESH_EXPIRY || '7d';
+process.env.NODE_ENV = 'test';
+
 const request = require('supertest');
+const mongoose = require('mongoose');
+const { MongoMemoryReplSet } = require('mongodb-memory-server');
 const app = require('../src/app');
 const { DoctorProfile, Service } = require('../src/models');
-require('./setup');
+
+let mongoServer;
+
+beforeAll(async () => {
+  // Use replica set to support transactions (createAppointment uses sessions)
+  mongoServer = await MongoMemoryReplSet.create({ replSetCount: 1 });
+  await mongoose.connect(mongoServer.getUri());
+});
+
+afterAll(async () => {
+  await mongoose.disconnect();
+  if (mongoServer) await mongoServer.stop();
+});
+
+afterEach(async () => {
+  const collections = mongoose.connection.collections;
+  for (const key in collections) {
+    await collections[key].deleteMany({});
+  }
+});
 
 // Helper to register and get token
 async function registerUser(overrides = {}) {
@@ -11,7 +39,7 @@ async function registerUser(overrides = {}) {
     password: 'TestPass123!',
     firstName: 'Test',
     lastName: 'Patient',
-    phone: '555-0100',
+    phone: '555-123-4567',
     ...overrides,
   };
   await request(app).post('/api/auth/register').send(user);
@@ -33,14 +61,14 @@ async function createDoctor() {
     passwordHash,
     firstName: 'Dr',
     lastName: 'Smith',
-    phone: '555-0200',
+    phone: '555-987-6543',
     role: 'DOCTOR',
   });
   const doctorProfile = await DoctorProfile.create({
     userId: doctorUser._id,
     specialty: 'General Medicine',
     bio: 'Test doctor',
-    education: 'MD - Test University',
+    education: [{ degree: 'MD', institution: 'Test University', year: '2020' }],
     experienceYears: 5,
     gender: 'Male',
     languages: ['English'],
