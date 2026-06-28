@@ -89,8 +89,29 @@ app.use('/api', notFoundHandler);
 // ─── Serve React frontend in production ──────────────────────────
 if (process.env.NODE_ENV === 'production') {
   const clientBuildPath = path.join(__dirname, '../../client/dist');
+  const staffBuildPath = path.join(__dirname, '../../staff-portal/dist');
 
-  // Serve hashed static assets (JS/CSS) with long-term cache
+  // Serve staff-portal at /staff
+  app.use('/staff', express.static(staffBuildPath, {
+    maxAge: '1y',
+    immutable: true,
+    setHeaders: (res, filePath) => {
+      if (path.basename(filePath) === 'index.html') {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+      }
+    },
+  }));
+  // Staff portal SPA fallback
+  app.get('/staff*', (req, res) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.sendFile(path.join(staffBuildPath, 'index.html'));
+  });
+
+  // Serve patient portal at root
   app.use(express.static(clientBuildPath, {
     maxAge: '1y',
     immutable: true,
