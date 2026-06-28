@@ -50,7 +50,7 @@ async function run() {
 
   console.log('\n' + '═'.repeat(60));
   console.log('  Database cleared and re-seeded successfully!');
-  console.log('  Admin login: admin@verdantcare.com / Admin@123');
+  console.log('  Admin login: admin@verdantcare.com / VerdantCare@2024!');
   console.log('═'.repeat(60) + '\n');
 
   await disconnectDatabase();

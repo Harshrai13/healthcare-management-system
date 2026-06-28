@@ -34,7 +34,7 @@ async function seedDatabase() {
     Review.deleteMany({}),
   ]);
 
-  const passwordHash = await bcrypt.hash('Admin@123', 12);
+  const passwordHash = await bcrypt.hash('VerdantCare@2024!', 12);
 
   // Only create admin/staff users - no dummy patients/doctors
   const admin = await User.create({
@@ -78,7 +78,7 @@ async function seedDatabase() {
   console.log(`  ${serviceDocs.length} services created`);
 
   console.log('\n  ── Admin Credentials ──');
-  console.log('  Admin: admin@verdantcare.com / Admin@123');
+  console.log('  Admin: admin@verdantcare.com / VerdantCare@2024!');
 }
 
 module.exports = { seedDatabase };
