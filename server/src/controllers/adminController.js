@@ -225,4 +225,75 @@ async function resetDoctorPassword(req, res, next) {
   } catch (error) { next(error); }
 }
 
-module.exports = { getDashboard, getAnalytics, getUsers, updateUserRole, getAuditLogs, loginAsUser, searchUsers, createDoctor, getDoctorCredentials, resetDoctorPassword };
+/**
+ * Delete a doctor account and all related data.
+ * - Cancels any upcoming appointments
+ * - Deletes DoctorProfile, User, and related records (consultations, prescriptions, reviews, records)
+ * - Creates an audit log entry
+ */
+async function deleteDoctor(req, res, next) {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findById(id).select('_id email firstName lastName role isActive');
+    if (!user) throw new AppError('User not found.', 404, ErrorCodes.NOT_FOUND);
+    if (user.role !== 'DOCTOR') throw new AppError('This user is not a doctor.', 400, ErrorCodes.VALIDATION_ERROR);
+
+    // Find the DoctorProfile for this user
+    const doctorProfile = await DoctorProfile.findOne({ userId: user._id });
+
+    if (doctorProfile) {
+      // Check for upcoming active appointments — cancel them before deletion
+      const upcomingAppts = await Appointment.find({
+        doctorId: doctorProfile._id,
+        status: { $in: ['PENDING', 'CONFIRMED', 'APPROVED', 'RESCHEDULED'] },
+      });
+
+      if (upcomingAppts.length > 0) {
+        // Cancel all upcoming appointments
+        await Appointment.updateMany(
+          { doctorId: doctorProfile._id, status: { $in: ['PENDING', 'CONFIRMED', 'APPROVED', 'RESCHEDULED'] } },
+          { status: 'CANCELLED', cancellationReason: 'Doctor account deleted by admin' }
+        );
+        logger.info('Upcoming appointments cancelled for deleted doctor', { doctorId: user._id, count: upcomingAppts.length });
+      }
+
+      // Delete related data
+      const Consultation = require('../models/Consultation');
+      const Prescription = require('../models/Prescription');
+      const Review = require('../models/Review');
+      const MedicalRecord = require('../models/MedicalRecord');
+
+      await Promise.all([
+        Consultation.deleteMany({ doctorId: doctorProfile._id }),
+        Prescription.deleteMany({ doctorId: doctorProfile._id }),
+        Review.deleteMany({ doctorId: doctorProfile._id }),
+        MedicalRecord.deleteMany({ doctorId: doctorProfile._id }),
+      ]);
+
+      // Delete the DoctorProfile
+      await DoctorProfile.findByIdAndDelete(doctorProfile._id);
+    }
+
+    // Delete the User account
+    await User.findByIdAndDelete(user._id);
+
+    // Audit log
+    await AuditLog.create({
+      userId: req.user.id,
+      action: 'DELETE_DOCTOR',
+      entity: 'User',
+      entityId: user._id.toString(),
+      oldValue: JSON.stringify({ email: user.email, name: `${user.firstName} ${user.lastName}` }),
+      ipAddress: req.ip,
+    });
+
+    logger.info('Doctor deleted by admin', { adminId: req.user.id, deletedDoctorId: user._id, email: user.email });
+
+    res.json({ success: true, message: `Doctor ${user.firstName} ${user.lastName} and all related records have been deleted.` });
+  } catch (error) {
+    next(error);
+  }
+}
+
+module.exports = { getDashboard, getAnalytics, getUsers, updateUserRole, getAuditLogs, loginAsUser, searchUsers, createDoctor, getDoctorCredentials, resetDoctorPassword, deleteDoctor };

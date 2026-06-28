@@ -54,6 +54,7 @@ export const adminAPI = {
   getAuditLogs: (params) => api.get('/admin/audit-logs', { params }),
   getDoctorCredentials: (id) => api.get(`/admin/doctors/${id}/credentials`),
   resetDoctorPassword: (id) => api.post(`/admin/doctors/${id}/reset-password`),
+  deleteDoctor: (id) => api.delete(`/admin/doctors/${id}`),
 };
 
 export const consultationsAPI = {

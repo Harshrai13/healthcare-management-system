@@ -1,6 +1,6 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Star, MoreVertical, CheckCircle, XCircle, Clock, Upload, X, Eye, Copy, Key } from 'lucide-react';
+import { Plus, Search, Star, MoreVertical, CheckCircle, XCircle, Clock, Upload, X, Eye, Copy, Key, Trash2, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { doctorsAPI, servicesAPI } from '../../api/doctorsAPI';
 import { adminAPI } from '../../api/generalAPI';
@@ -14,6 +14,7 @@ export default function AdminDoctorsPage() {
   const [openMenuId, setOpenMenuId] = useState(null);
   const [credentials, setCredentials] = useState(null);
   const [viewCredDoctor, setViewCredDoctor] = useState(null);
+  const [deleteDoctor, setDeleteDoctor] = useState(null);
   const fileInputRef = useRef(null);
   const queryClient = useQueryClient();
 
@@ -98,6 +99,22 @@ export default function AdminDoctorsPage() {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (doctorId) => {
+      const { data } = await adminAPI.deleteDoctor(doctorId);
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['admin_doctors'] });
+      setDeleteDoctor(null);
+      toast.success(data?.message || 'Doctor deleted successfully');
+    },
+    onError: (err) => {
+      const msg = err?.response?.data?.message || 'Failed to delete doctor';
+      toast.error(msg);
+    },
+  });
+
   if (isLoading) return <LoadingSpinner />;
 
   const getInitials = (name) => {
@@ -176,6 +193,12 @@ export default function AdminDoctorsPage() {
                           onClick={(e) => { e.stopPropagation(); setOpenMenuId(null); setViewCredDoctor(doc._id || doc.id); }}
                         >
                           <Key size={16} /> View Credentials
+                        </button>
+                        <button
+                          className="flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors w-full text-left"
+                          onClick={(e) => { e.stopPropagation(); setOpenMenuId(null); setDeleteDoctor(doc); }}
+                        >
+                          <Trash2 size={16} /> Delete Doctor
                         </button>
                       </div>
                     )}
@@ -347,6 +370,44 @@ export default function AdminDoctorsPage() {
             </div>
             <div className="p-6 border-t border-neutral-100">
               <button onClick={() => setCredentials(null)} className="btn-primary w-full justify-center">Done</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteDoctor && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setDeleteDoctor(null)}>
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6 border-b border-neutral-100 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-neutral-900 flex items-center gap-2">
+                <AlertTriangle size={20} className="text-red-500" /> Delete Doctor
+              </h3>
+              <button onClick={() => setDeleteDoctor(null)} className="p-1.5 text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 rounded-lg">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-neutral-600">
+                Are you sure you want to delete <strong>Dr. {deleteDoctor.firstName || ''} {deleteDoctor.lastName || ''}</strong>?
+              </p>
+              <div className="bg-red-50 border border-red-200 rounded-xl p-3">
+                <p className="text-xs text-red-700 font-medium">
+                  This will permanently delete the doctor's account, profile, and all related records (appointments will be cancelled, consultations, prescriptions, reviews, and medical records will be removed). This action cannot be undone.
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button onClick={() => setDeleteDoctor(null)} className="btn-outline flex-1 justify-center">
+                  Cancel
+                </button>
+                <button
+                  className="flex-1 justify-center rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 transition-colors disabled:opacity-50"
+                  disabled={deleteMutation.isPending}
+                  onClick={() => deleteMutation.mutate(deleteDoctor._id || deleteDoctor.id)}
+                >
+                  {deleteMutation.isPending ? 'Deleting...' : 'Delete Permanently'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
